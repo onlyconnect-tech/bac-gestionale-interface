@@ -1,0 +1,25 @@
+{
+  "name": "bac-gestionale-interface",
+  "version": "1.0.0",
+  "description": "interface ws to .dBASE files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "doc": "rm -r ./docs && esdoc"
+  },
+  "author": "Massimo.Cappe@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "env2": "^2.2.2",
+    "esm": "^3.0.81",
+    "hapi": "^17.5.4",
+    "hapi-pino": "^5.0.1",
+    "mongodb": "^3.1.4",
+    "mongoose": "^5.2.12",
+    "node-dbf": "^0.4.0"
+  },
+  "devDependencies": {
+    "esdoc": "^1.1.0",
+    "esdoc-standard-plugin": "^1.0.0"
+  }
+}

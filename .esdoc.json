@@ -1,0 +1,7 @@
+{
+  "source": ".",
+  "includes": ["\\.js$"],
+  "excludes": ["(node_modules|docs|test)"],
+  "destination": "./docs",
+  "plugins": [{"name": "esdoc-standard-plugin"}]
+}
