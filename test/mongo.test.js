@@ -10,11 +10,13 @@ const testInit = async () => {
 
     let mongo = new Mongo();
 
-    console.log('SONO QUI!!!');
+    try {
+        const db = await mongo.getDB(url, dbName);
 
-    const db = await mongo.getDB(url, dbName);
-
-    mongo.closeClient();
+        mongo.closeClient();
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 testInit();
