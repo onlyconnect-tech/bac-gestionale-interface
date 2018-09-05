@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "doc": "rm -r ./docs && esdoc"
+    "doc": "rm -r ./docs && esdoc",
+    "dev": "nodemon start-server.js",
+    "eslint": "eslint"
   },
   "author": "Massimo.Cappe@gmail.com",
   "license": "ISC",
@@ -20,6 +22,8 @@
   },
   "devDependencies": {
     "esdoc": "^1.1.0",
-    "esdoc-standard-plugin": "^1.0.0"
+    "esdoc-standard-plugin": "^1.0.0",
+    "eslint": "^5.5.0",
+    "nodemon": "^1.18.4"
   }
 }

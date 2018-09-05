@@ -11,27 +11,27 @@ const dbName = 'myproject';
 
 var numRow = 0;
 let parser = new Parser('./data/ANACF.DBF');
- 
+
 var isFinishedReadingDB = false;
 
 var records = [];
 
 parser.on('start', (p) => {
-    console.log('dBase file parsing has started');
+    console.log('dBase file parsing has started', p.filename);
 });
- 
+
 parser.on('header', (h) => {
-    console.log('dBase file header has been parsed' + JSON.stringify(h));
+    console.log('dBase file header has been parsed', JSON.stringify(h));
 });
- 
+
 parser.on('record', (record) => {
-    numRow ++;
+    numRow++;
     // console.log("PUSH RECORD:", record);
     records.push(record);
 });
- 
+
 parser.on('end', (p) => {
-    console.log('Finished parsing the dBase file - numRow: ' + numRow);
+    console.log('Finished parsing the dBase file - numRow:', numRow);
     //console.log( JSON.stringify(record)); 
 
     isFinishedReadingDB = true;
@@ -45,50 +45,50 @@ parser.on('end', (p) => {
     recursiveParser(record);
     
     */
-    
+
 });
- 
+
 parser.parse();
 
 async function doInsertWork() {
-      
-        const mongo = new Mongo();
 
-      /*
-        records.map( record => {
-            console.log("********* ", record);
-        });
-        */
+    const mongo = new Mongo();
 
-        // start with current being an "empty" already-fulfilled promise
-        try {
-            const db = await mongo.getDB(url, dbName);
-            
-            var current = Promise.resolve();
+    /*
+      records.map( record => {
+          console.log("********* ", record);
+      });
+      */
 
-            await Promise.all(records.map(function(record) { 
+    // start with current being an "empty" already-fulfilled promise
+    try {
+        const db = await mongo.getDB(url, dbName);
 
-                current = current.then(async function() {
-                    try {
-                        var p = await doInsertRecord(db, record) // returns promise
-                        return p;
-                    } catch (e) {
-                        console.log(e);
-                        return Promise.reject();
-                    }
-                }).catch(function(err) {
-                    console.log(err, " --> ", record);
-                });
-                
-                return current;
-            }));
+        var current = Promise.resolve();
 
-            mongo.closeClient();
-        } catch (e) {
-            console.log(e);
-        }
+        await Promise.all(records.map(function (record) {
 
-    
+            current = current.then(async function () {
+                try {
+                    var p = await doInsertRecord(db, record); // returns promise
+                    return p;
+                } catch (e) {
+                    console.log(e);
+                    return Promise.reject();
+                }
+            }).catch(function (err) {
+                console.log(err, ' --> ', record);
+            });
+
+            return current;
+        }));
+
+        mongo.closeClient();
+    } catch (e) {
+        console.log(e);
+    }
+
+
 }
 
 async function doInsertRecord(db, record) {
@@ -279,7 +279,7 @@ async function doInsertRecord(db, record) {
 
         */
 
-        if(record.CLFR === 'F'){
+        if (record.CLFR === 'F') {
 
             return resolve();
         }
@@ -304,7 +304,7 @@ async function doInsertRecord(db, record) {
 
         if (!isDeleted) {
 
-            if(isNaN(info.codiceCli)){
+            if (isNaN(info.codiceCli)) {
                 console.log('INVALID RECORD:', record);
                 return reject();
             }
@@ -314,10 +314,11 @@ async function doInsertRecord(db, record) {
             var mongo = new Mongo();
 
             var anagrafica = {
-                codiceCli: info.codiceCli, 
-                ragSoc: ragSoc, 
-                indSedeLeg: info.indSedeLeg, 
-                codiceFisc: info.codiceFisc, 
+                sequenceNumber: sequenceNumber,
+                codiceCli: info.codiceCli,
+                ragSoc: ragSoc,
+                indSedeLeg: info.indSedeLeg,
+                codiceFisc: info.codiceFisc,
                 pIva: info.pIva
             };
 
@@ -391,8 +392,3 @@ async function doInsertRecord(db, record) {
     });
 
 }
-
-
-
-
-
