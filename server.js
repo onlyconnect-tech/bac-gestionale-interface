@@ -24,8 +24,15 @@ const server = Hapi.server({
 
 const init = async () => {
 
-    const mongo = new Mongo();
+    server.method('add', (a, b) => {  
+        return new Promise((resolve, reject) => {
+          const a = b.c.d;
+          reject('The line before should explode: ' + a);
+        });
+      });
 
+    const mongo = new Mongo();
+    
     db = await mongo.getDB(url, dbName);
 
     // registre mongo e db

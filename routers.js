@@ -1,8 +1,29 @@
 'use strict';
 
+const Joi = require('joi');
+const Bounce = require('bounce');
+const Promise = require('bluebird');
+
 import Mongo from './lib/mongo';
 
 const mongo = new Mongo();
+
+const handleError = function (request, h, err) {
+
+    /*
+    if (err.isJoi && Array.isArray(err.details) && err.details.length > 0) {
+        const invalidItem = err.details[0];
+        return h.response(`Data Validation Error. Schema violation. <${invalidItem.path}> \nDetails: ${JSON.stringify(err.details)}`)
+            .code(400)
+            .takeover();
+    }
+
+    return h.response(err)
+        .takeover()
+    */
+   console.log(JSON.stringify(err));
+   throw err;
+};
 
 const routes = [{
     method: 'GET',
@@ -23,10 +44,37 @@ const routes = [{
     handler: async function (request, h) {
         
         var responseResults;
+        
+        var  res = await mongo.findAnagraficaFast(this.db);
+
+        console.log(res);
+ 
+        return res;
+    }
+}, {
+    method: 'GET',
+    path: '/anagraficaSLOW',
+    handler: async function (request, h) {
+        
+        var responseResults;
 
         var cur = await mongo.findAnagrafiche(this.db);
         
-        responseResults = cur.toArray();
+        var mio = await cur.toArray();
+
+        mio = mio.slice(0, 4000);
+
+        responseResults = Promise.all(mio.map( (doc) => {
+            var idLocation = doc.location.id_location;
+            
+            return mongo.findLocationById(this.db, idLocation).then( function (docLocation){
+                doc.location = docLocation;
+                return doc;
+            });
+
+        }));
+
+        
         return responseResults;
     }
 }, {
@@ -48,13 +96,15 @@ const routes = [{
     method: 'GET',
     path: '/last-anagrafica',
     handler: async function (request, h) {
-        
-        return { sequenceNumber: 1};
+                
+        return mongo.findLastAnagrafichaNumber(this.db);
     }
 }, {
     method: 'GET',
     path: '/get-anagrafica/{ids}',
     handler: async function (request, h) {
+
+        var db = this.db;
         
         var responseResults;
 
@@ -63,19 +113,97 @@ const routes = [{
         var ids = request.params.ids;
 
         var arrIds = ids.split('-');
+         
+        console.log(arrIds);
 
-        console.log('SEARCHING INFO:', arrIds);
+        const schema = Joi.array().items(Joi.number());
 
+        return new Promise(function (resolve, reject) {
+
+            Joi.validate(arrIds, schema, (err, value) => { 
+
+                if(err) {
+                    console.log(err);
+                    return reject(err);
+                }
+                
+                console.log(value);
+                
+                resolve(value);
+   
+            });
+     
+        }).then(function(values) {
+            return Promise.all(values.map((sequenceNumber) => {
+
+                var p = mongo.findAnagraficheBySequenceNumber(db, parseInt(sequenceNumber));
+                
+                return p;
+            }));
+        }, function (err) {
+            return err;
+        });
+
+        
+        /*
         return Promise.all(arrIds.map((sequenceNumber) => {
-            console.log('***', sequenceNumber);
 
             var p = mongo.findAnagraficheBySequenceNumber(this.db, parseInt(sequenceNumber));
             
             return p;
         }));
-        
+        */
     }
-}];
+}, {
+    method: 'GET',
+    path: '/get-anagrafica-elem/{id}',
+    options: {
+        validate: {
+            params: {
+                id: Joi.number()
+            },
+            failAction: handleError
+        }
+    }, 
+    handler: async function (request, h) {
+        
+        var responseResults;
+
+        // find id-values
+
+        var id = request.params.id;
+
+        return mongo.findAnagraficheBySequenceNumber(this.db, id);
+        
+        }
+    }, {  
+        method: 'GET',
+        path: '/add',
+        handler: async (request, h) => {
+
+          let server = request.server;
+          let result = null;
+          try {
+            result = await server.methods.add(1, 2);
+            return result;
+          } catch (err) {
+            // console.log(err);
+            // throw err;
+            // return "ERROR";
+            Bounce.rethrow(err, 'system');
+          }
+          return result;
+        }
+      }, {
+          method: 'GET',
+          path: '/location',
+          handler: async function (request, h){
+
+            return mongo.findLocation(this.db).toArray();
+          }
+      }
+
+];
 
 
 module.exports = routes;

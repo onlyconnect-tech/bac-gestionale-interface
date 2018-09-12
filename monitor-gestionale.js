@@ -313,6 +313,34 @@ async function doInsertRecord(db, record) {
 
             var mongo = new Mongo();
 
+            // info.localita, info.cap, info.prov
+            var location = { localita: info.localita, 
+                cap: info.cap, 
+                prov: info.prov };
+
+            try {
+                var idLocation = await mongo.doInsertLocationOnlyOne(db, location);
+
+                console.log('idLocation:', idLocation);
+
+                var anagrafica = {
+                    sequenceNumber: sequenceNumber,
+                    codiceCli: info.codiceCli,
+                    ragSoc: ragSoc,
+                    indSedeLeg: info.indSedeLeg,
+                    codiceFisc: info.codiceFisc,
+                    pIva: info.pIva,
+                    location: { id_location: idLocation }
+                };
+    
+                await mongo.doInsertAnagrafica(db, anagrafica);
+
+
+            } catch(err) {
+                console.log(err);
+            }
+            /*
+
             var anagrafica = {
                 sequenceNumber: sequenceNumber,
                 codiceCli: info.codiceCli,
@@ -323,6 +351,7 @@ async function doInsertRecord(db, record) {
             };
 
             await mongo.doInsertAnagrafica(db, anagrafica);
+            */
 
             resolve();
 
