@@ -45,37 +45,11 @@ const routes = [{
         
         var responseResults;
         
-        var  res = await mongo.findAnagraficaFast(this.db);
+        var  res = await mongo.findAnagrafica(this.db);
 
-        console.log(res);
+        console.log("res --->");
  
         return res;
-    }
-}, {
-    method: 'GET',
-    path: '/anagraficaSLOW',
-    handler: async function (request, h) {
-        
-        var responseResults;
-
-        var cur = await mongo.findAnagrafiche(this.db);
-        
-        var mio = await cur.toArray();
-
-        mio = mio.slice(0, 4000);
-
-        responseResults = Promise.all(mio.map( (doc) => {
-            var idLocation = doc.location.id_location;
-            
-            return mongo.findLocationById(this.db, idLocation).then( function (docLocation){
-                doc.location = docLocation;
-                return doc;
-            });
-
-        }));
-
-        
-        return responseResults;
     }
 }, {
     method: 'GET',
@@ -143,16 +117,6 @@ const routes = [{
         }, function (err) {
             return err;
         });
-
-        
-        /*
-        return Promise.all(arrIds.map((sequenceNumber) => {
-
-            var p = mongo.findAnagraficheBySequenceNumber(this.db, parseInt(sequenceNumber));
-            
-            return p;
-        }));
-        */
     }
 }, {
     method: 'GET',
