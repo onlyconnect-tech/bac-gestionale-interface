@@ -36,7 +36,16 @@ https://medium.com/@iaincollins/error-handling-in-javascript-a6172ccdf9af
 
 https://www.w3schools.com/nodejs/nodejs_mongodb_join.asp
 
+https://docs.mongodb.com/manual/tutorial/aggregation-zip-code-data-set/
 
+### HAPI & MONGODB
+
+https://patrick-meier.io/build-a-restful-api-using-hapi-js-and-mongodb/
+
+
+### MISC
+
+https://www.infoq.com/articles/Starting-With-MongoDB
 
 
 

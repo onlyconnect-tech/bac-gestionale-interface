@@ -165,7 +165,24 @@ const routes = [{
 
             return mongo.findLocation(this.db).toArray();
           }
-      }
+      }, {
+        method: 'GET',
+        path: '/group-anagrafica-by-location',
+        handler: async function (request, h){
+
+          return mongo.groupAnagraficaByLocations(this.db);
+        }
+    }, {
+        method: 'GET',
+        path: '/get-anagrafica-by-location/{location}',
+        handler: async function (request, h){
+          var locationName = request.params.location;
+
+          console.log('GET BY LOCATION:', locationName);
+          
+          return mongo.getAnagraficaByLocation(this.db, locationName);
+        }
+    }
 
 ];
 
