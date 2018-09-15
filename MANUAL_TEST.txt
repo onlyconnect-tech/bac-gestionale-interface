@@ -1,0 +1,50 @@
+
+5b9be660d4bdd9df26303380 NEW
+
+5b9cb8e184de4fb60a91fbaa OLD
+
+location/id_location 
+
+
+> db.localita.find({localita: 'SAMARATE'})
+{ "_id" : ObjectId("5b9cc07684de4fb60a9280fd"), "cap" : "21017", "localita" : "SAMARATE", "prov" : "VA" }
+> 
+
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc07684de4fb60a9280fd')})
+{ "_id" : ObjectId("5b9cc07684de4fb60a9280ff"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc07684de4fb60a9280fd") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+
+UPDATE SAMARATE
+
+> db.localita.update({localita: 'SAMARATE'}, {$set: { prov: 'VARESE'}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> 
+
+RERUN SYNC
+
+> db.localita.find({localita: 'SAMARATE'})
+{ "_id" : ObjectId("5b9cc07684de4fb60a9280fd"), "cap" : "21017", "localita" : "SAMARATE", "prov" : "VARESE" }
+{ "_id" : ObjectId("5b9cc56984de4fb60a93064a"), "cap" : "21017", "localita" : "SAMARATE", "prov" : "VA" }
+> 
+
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')})
+{ "_id" : ObjectId("5b9cc07684de4fb60a9280ff"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+
+CANCELLO DA ANAGRAFICA
+
+> db.anagrafica.remove({"_id" : ObjectId("5b9cc07684de4fb60a9280ff")})
+WriteResult({ "nRemoved" : 1 })
+> 
+
+RUN SYNC
+
+Dovrebbe riaggiungere
+
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')})
+{ "_id" : ObjectId("5b9cc91984de4fb60a938b8b"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+
+
+
+

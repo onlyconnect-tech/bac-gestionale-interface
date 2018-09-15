@@ -302,7 +302,7 @@ async function doInsertRecord(db, record) {
             ragSoc = ragSoc + ' - ' + info.ragSoc2;
         }
 
-        if (!isDeleted) {
+        
 
             if (isNaN(info.codiceCli)) {
                 console.log('INVALID RECORD:', record);
@@ -319,12 +319,20 @@ async function doInsertRecord(db, record) {
                 prov: info.prov };
 
             try {
-                var idLocation = await mongo.doInsertLocationOnlyOne(db, location);
+                const resInsertLocation = await mongo.doInsertLocationIfNo(db, location);
 
+                const op = resInsertLocation.op;
+                const  idLocation = resInsertLocation.locationId;
+
+                console.log('OP LOCATION:', op);
                 console.log('idLocation:', idLocation);
+
+                // if op === 'INSERTED' add to sync operations
+                // if op === 'NONE' no need sync operations
 
                 var anagrafica = {
                     sequenceNumber: sequenceNumber,
+                    isDeleted: isDeleted,
                     codiceCli: info.codiceCli,
                     ragSoc: ragSoc,
                     indSedeLeg: info.indSedeLeg,
@@ -333,90 +341,23 @@ async function doInsertRecord(db, record) {
                     location: { id_location: idLocation }
                 };
     
-                await mongo.doInsertAnagrafica(db, anagrafica);
+                const restInsertAnagrafica = await mongo.doInsertAnagrafica(db, anagrafica);
 
+                console.log("INSERT ANAG:", restInsertAnagrafica);
+
+                // if op === 'INSERT' add to sync operations
+                // if op === 'UPDATE' add to sync operations
+                // if op === 'NONE' no need sync operations
+
+
+                
 
             } catch(err) {
                 console.log(err);
             }
-            /*
-
-            var anagrafica = {
-                sequenceNumber: sequenceNumber,
-                codiceCli: info.codiceCli,
-                ragSoc: ragSoc,
-                indSedeLeg: info.indSedeLeg,
-                codiceFisc: info.codiceFisc,
-                pIva: info.pIva
-            };
-
-            await mongo.doInsertAnagrafica(db, anagrafica);
-            */
 
             resolve();
-
-            // comune, cap, provincia
-
-
-            /*
-
-            anagrafica.getLocationID(info.localita, info.cap, info.prov).then(elem => {
-                console.log("ELEM: ", elem);
-                if (elem) {
-                    // for join with locations table
-                    var localitaId = elem.id;
-                    anagrafica.insertAnagraficaClienti(sequenceNumber, info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva, localitaId).catch((err) => {
-                        console.log(err.detail);
-                        return reject();
-                    });
-
-                    return resolve();
-
-                } else {
-                    console.log('%s, %d, %s not found DO INSERT', info.localita, info.cap, info.prov);
-                    // do insert
-
-                    anagrafica.insertLocations(info.localita, info.cap, info.prov).then((idLocation) => {
-
-                        console.log('%s, %d, %s INSERTED with %d', info.localita, info.cap, info.prov, idLocation);
-
-                        var localitaId = idLocation;
-                        anagrafica.insertAnagraficaClienti(sequenceNumber, info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva, localitaId).catch((err) => {
-                            console.log(err.detail);
-                            return reject();
-                        });
-
-                        return resolve();
-
-                    }).catch(err => {
-                        console.log('ERROR INSERTING LOCATION: %s, %d, %s - error: %s', info.localita, info.cap, info.prov, err.detail);
-                        return reject();
-                    });
-
-                }
-
-            }).catch((err) => {
-                console.log(err.detail);
-
-                return reject();
-            });
-
-            */
-
-        } else {
-            // do DELETE if present
-
-            console.log('----> DO DELETE = sequenceNumber: %d, codiceCli: %d, ragSoc: %s, indSedeLeg: %s, codiceFisc: %s, pIva: %s',
-                sequenceNumber,
-                info.codiceCli,
-                ragSoc,
-                info.indSedeLeg,
-                info.codiceFisc,
-                info.pIva);
-            //@TODO
-
-            resolve();
-        }
+    
 
     });
 
