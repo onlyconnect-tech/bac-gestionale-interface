@@ -45,6 +45,31 @@ Dovrebbe riaggiungere
 { "_id" : ObjectId("5b9cc91984de4fb60a938b8b"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
 > 
 
+MOFIFICO ANAGRAFICA
+
+modifico la sede legale
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')})
+{ "_id" : ObjectId("5b9cc91984de4fb60a938b8b"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+> 
+> db.anagrafica.update({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')}, {$set: {indSedeLeg: "PIAZZA VOLTA 55"}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> 
+
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')})
+{ "_id" : ObjectId("5b9cc91984de4fb60a938b8b"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 55", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+
+eseguo script di sincronizzazione
+
+> db.anagrafica.find({'location.id_location': ObjectId('5b9cc56984de4fb60a93064a')})
+{ "_id" : ObjectId("5b9cc91984de4fb60a938b8b"), "sequenceNumber" : 7787, "codiceCli" : "25998", "codiceFisc" : "91046910120", "indSedeLeg" : "PIAZZA VOLTA 2", "isDeleted" : false, "location" : { "id_location" : ObjectId("5b9cc56984de4fb60a93064a") }, "pIva" : "", "ragSoc" : "COND. ISIDE" }
+> 
+
+OK MODIFICATA
+
+
+
 
 
 

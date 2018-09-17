@@ -174,6 +174,13 @@ const routes = [{
         }
     }, {
         method: 'GET',
+        path: '/find-orphan-location',
+        handler: async function (request, h){
+
+          return mongo.findOrphanLocations(this.db);
+        }
+    }, {
+        method: 'GET',
         path: '/get-anagrafica-by-location/{location}',
         handler: async function (request, h){
           var locationName = request.params.location;
