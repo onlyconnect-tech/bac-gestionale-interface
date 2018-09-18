@@ -1,5 +1,7 @@
 import Parser from 'node-dbf';
 
+const logger = require('./config/winston.js');
+
 import Mongo from './lib/mongo';
 
 // Connection URL
@@ -16,12 +18,14 @@ var isFinishedReadingDB = false;
 
 var records = [];
 
+logger.log('info', 'test message %s', 'my string');
+
 parser.on('start', (p) => {
-    console.log('dBase file parsing has started', p.filename);
+    logger.log('info', 'dBase file %s parsing has started', p.filename, {});
 });
 
 parser.on('header', (h) => {
-    console.log('dBase file header has been parsed', JSON.stringify(h));
+    logger.debug('dBase file header has been parsed %s', JSON.stringify(h));
 });
 
 parser.on('record', (record) => {
@@ -31,7 +35,7 @@ parser.on('record', (record) => {
 });
 
 parser.on('end', (p) => {
-    console.log('Finished parsing the dBase file - numRow:', numRow);
+    logger.info('Finished parsing the dBase file - numRow:', numRow);
     //console.log( JSON.stringify(record)); 
 
     isFinishedReadingDB = true;
@@ -73,11 +77,11 @@ async function doInsertWork() {
                     var p = await doInsertRecord(db, record); // returns promise
                     return p;
                 } catch (e) {
-                    console.log(e);
+                    logger.error(e);
                     return Promise.reject();
                 }
             }).catch(function (err) {
-                console.log(err, ' --> ', record);
+                logger.error(err, ' --> ', record);
             });
 
             return current;
@@ -85,7 +89,7 @@ async function doInsertWork() {
 
         mongo.closeClient();
     } catch (e) {
-        console.log(e);
+        logger.error(e);
     }
 
 
@@ -98,7 +102,7 @@ async function doInsertRecord(db, record) {
         var isDeleted = record['@deleted'];
         var sequenceNumber = record['@sequenceNumber'];
 
-        console.log('--> sequenceNumber: %d . isDeleted: %s', sequenceNumber, isDeleted);
+        logger.debug('--> sequenceNumber: %d . isDeleted: %s', sequenceNumber, isDeleted);
 
         /*
         console.log("-idFattura: %d - addDoc: %s - datDoc: %s - codCliente: %d - totImp: %f - totIVA: %f - isDeleted:  %s", 
@@ -305,11 +309,11 @@ async function doInsertRecord(db, record) {
         
 
             if (isNaN(info.codiceCli)) {
-                console.log('INVALID RECORD:', record);
+                logger.warn('INVALID RECORD:', record);
                 return reject();
             }
 
-            console.log('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
+            logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
 
             var mongo = new Mongo();
 
@@ -324,8 +328,8 @@ async function doInsertRecord(db, record) {
                 const op = resInsertLocation.op;
                 const  idLocation = resInsertLocation.locationId;
 
-                console.log('OP LOCATION:', op);
-                console.log('idLocation:', idLocation);
+                logger.debug('OP LOCATION:', op);
+                logger.debug('idLocation:', idLocation);
 
                 // if op === 'INSERTED' add to sync operations
                 // if op === 'NONE' no need sync operations
@@ -343,7 +347,7 @@ async function doInsertRecord(db, record) {
     
                 const restInsertAnagrafica = await mongo.doInsertAnagrafica(db, anagrafica);
 
-                console.log("INSERT ANAG:", restInsertAnagrafica);
+                logger.debug("INSERT ANAG:", restInsertAnagrafica);
 
                 // if op === 'INSERT' add to sync operations
                 // if op === 'UPDATE' add to sync operations
@@ -353,7 +357,7 @@ async function doInsertRecord(db, record) {
                 
 
             } catch(err) {
-                console.log(err);
+                logger.error(err);
             }
 
             resolve();

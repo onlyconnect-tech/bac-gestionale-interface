@@ -12,6 +12,7 @@
   "author": "Massimo.Cappe@gmail.com",
   "license": "ISC",
   "dependencies": {
+    "app-root-path": "^2.1.0",
     "bluebird": "^3.5.2",
     "bounce": "^1.2.0",
     "env2": "^2.2.2",
