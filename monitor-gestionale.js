@@ -35,7 +35,7 @@ parser.on('record', (record) => {
 });
 
 parser.on('end', (p) => {
-    logger.info('Finished parsing the dBase file - numRow:', numRow);
+    logger.log('info', 'Finished parsing the dBase file - numRow: %d', numRow);
     //console.log( JSON.stringify(record)); 
 
     isFinishedReadingDB = true;
@@ -89,7 +89,7 @@ async function doInsertWork() {
 
         mongo.closeClient();
     } catch (e) {
-        logger.error(e);
+        logger.log('error', "%j", e);
     }
 
 
@@ -310,7 +310,7 @@ async function doInsertRecord(db, record) {
 
             if (isNaN(info.codiceCli)) {
                 logger.warn('INVALID RECORD:', record);
-                return reject();
+                return reject(new Error('INVALID RECORD: ' + record));
             }
 
             logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
@@ -328,8 +328,8 @@ async function doInsertRecord(db, record) {
                 const op = resInsertLocation.op;
                 const  idLocation = resInsertLocation.locationId;
 
-                logger.debug('OP LOCATION:', op);
-                logger.debug('idLocation:', idLocation);
+                logger.log('debug', 'OP LOCATION: %s', op);
+                logger.log('debug', 'idLocation: %s', idLocation.toString());
 
                 // if op === 'INSERTED' add to sync operations
                 // if op === 'NONE' no need sync operations
@@ -347,7 +347,7 @@ async function doInsertRecord(db, record) {
     
                 const restInsertAnagrafica = await mongo.doInsertAnagrafica(db, anagrafica);
 
-                logger.debug("INSERT ANAG:", restInsertAnagrafica);
+                logger.log('debug', "INSERT ANAG:", restInsertAnagrafica);
 
                 // if op === 'INSERT' add to sync operations
                 // if op === 'UPDATE' add to sync operations
