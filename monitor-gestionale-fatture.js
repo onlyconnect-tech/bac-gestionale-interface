@@ -13,11 +13,14 @@ const url = 'mongodb://localhost:27017';
 const dbName = 'myproject';
 
 var numRow = 0;
+var numRowProcessed = 0;
+
 let parser = new Parser('./data/TABFST01.DBF');
 
 const mongo = new Mongo();
 
 var dbMongo;
+var isFinishedParsing = false;
 
 mongo.getDB(url, dbName).then((db) => {
     dbMongo = db;
@@ -33,11 +36,20 @@ mongo.getDB(url, dbName).then((db) => {
     parser.on('record', (record) => {
         numRow ++;
         //console.log( JSON.stringify(record)); 
-        doInsertRecord(db, record);
+        return doInsertRecord(db, record).then((result) => {
+            numRowProcessed ++;
+
+            if(isFinishedParsing && (numRow === numRowProcessed)) {
+                console.log('SHOULD END!!!');
+            }
+            return;
+            });
+        
     });
      
     parser.on('end', (p) => {
         console.log('Finished parsing the dBase file - numRow: ' + numRow);
+        isFinishedParsing = true;
     });
      
     parser.parse();
@@ -46,9 +58,7 @@ mongo.getDB(url, dbName).then((db) => {
     console.log("ERROR:", err);
 });
  
-
-
-function doInsertRecord(db, record) {
+async function doInsertRecord(db, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
@@ -78,32 +88,9 @@ function doInsertRecord(db, record) {
 
     if(!isDeleted) {
 
-        mongo.insertFattura( db, fattura);
-
-        /*
-
-        getIfCodiceCliInAnagraficaClienti(codCliente).then(result => {
-            if(!result) {
-                console.log("COD_CLI: %d NOT FOUND", codCliente);
-            } else {
-                insertFatture( idFattura, seqNumberGest, annDoc, datDoc, codCliente, totImp, totIVA).catch(err=> {
-                    console.log("--->> seqNumberGest %d - idFattura: %d - addDoc: %s - datDoc: %s - codCliente: %d - totImp: %f - totIVA: %f - isDeleted:  %s | err: %s", 
-                        seqNumberGest, idFattura, annDoc, datDoc, codCliente, totImp, totIVA, isDeleted, err.detail);
-                });
-            }
-        }).catch(err=> {
-            console.log("--->> idFattura: %d - addDoc: %s - datDoc: %s - codCliente: %d - totImp: %f - totIVA: %f - isDeleted:  %s | err: %s", 
-                idFattura, annDoc, datDoc, codCliente, totImp, totIVA, isDeleted, err.detail);
-        });
-
-        */
+        const resultInsert = await mongo.insertFattura( db, fattura);
 
     }
 
 }
 
-function insertFatture( idFattura, seqNumberGest, annDoc, datDoc, codCliente, totImp, totIva) {
-
-    
-
-}
