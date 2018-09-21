@@ -1,5 +1,6 @@
 
 import Parser from 'node-dbf';
+import { Observable } from "rxjs/Observable";
 
 const logger = require('./config/winston.js');
 
@@ -22,6 +23,23 @@ const mongo = new Mongo();
 var dbMongo;
 var isFinishedParsing = false;
 
+var observerG;
+
+var observable = Observable.create(function subscribe(observer) {
+    observerG = observer;
+    // observer.next('Hey guys!')
+});
+
+observable.subscribe((record) => {
+
+    return doInsertRecord(dbMongo, record).then((result) => {
+            
+    });
+
+}, (err) => {}, () => {
+    console.log('COMPLETE REACHED!!!');
+});
+
 mongo.getDB(url, dbName).then((db) => {
     dbMongo = db;
 
@@ -36,6 +54,12 @@ mongo.getDB(url, dbName).then((db) => {
     parser.on('record', (record) => {
         numRow ++;
         //console.log( JSON.stringify(record)); 
+        observerG.next(record);
+
+        
+
+        /*
+        
         return doInsertRecord(db, record).then((result) => {
             numRowProcessed ++;
 
@@ -45,11 +69,14 @@ mongo.getDB(url, dbName).then((db) => {
             return;
             });
         
+        */
+        
     });
      
     parser.on('end', (p) => {
         console.log('Finished parsing the dBase file - numRow: ' + numRow);
         isFinishedParsing = true;
+        observerG.complete();
     });
      
     parser.parse();
