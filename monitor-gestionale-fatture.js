@@ -105,10 +105,8 @@ async function doInsertRecord(db, record) {
 
     // check if !isDeleted
 
-    if (!isDeleted) {
+    const resultOp = await mongo.insertOrUpdateFattura(db, fattura);
 
-        const resultInsert = await mongo.insertFattura(db, fattura);
-
-    }
+    return resultOp;
 
 }

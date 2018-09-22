@@ -78,48 +78,6 @@ mongo.getDB(url, dbName).then((db) => {
     console.log("ERROR:", err);
 });
 
-// @deprecated
-async function doInsertWork() {
-
-    const mongo = new Mongo();
-
-    /*
-      records.map( record => {
-          console.log("********* ", record);
-      });
-      */
-
-    // start with current being an "empty" already-fulfilled promise
-    try {
-        const db = await mongo.getDB(url, dbName);
-
-        var current = Promise.resolve();
-
-        await Promise.all(records.map(function (record) {
-
-            current = current.then(async function () {
-                try {
-                    var p = await doInsertRecord(db, record); // returns promise
-                    return p;
-                } catch (e) {
-                    logger.error("QQQQ", e);
-                    return Promise.reject();
-                }
-            }).catch(function (err) {
-                logger.error(err, ' --> ', record);
-            });
-
-            return current;
-        }));
-
-        mongo.closeClient();
-    } catch (e) {
-        logger.log('error', "%j", e);
-    }
-
-
-}
-
 async function doInsertRecord(db, record) {
 
     return new Promise(async function (resolve, reject) {
@@ -187,7 +145,7 @@ async function doInsertRecord(db, record) {
                 location: location
             };
 
-            const restInsertAnagrafica = await mongo.doInsertAnagrafica(db, anagrafica);
+            const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(db, anagrafica);
 
             logger.log('debug', "SYNC ANAG:", restInsertAnagrafica);
 
