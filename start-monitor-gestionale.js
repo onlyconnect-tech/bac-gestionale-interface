@@ -8,6 +8,6 @@ require = require("esm")(module/*, options*/);
 exports.module = {
     
     monitorAnagrafica: require("./monitor-gestionale-anagrafica.js"),
-    // monitorFatture: require("./monitor-gestionale-fatture.js"),
+    //  monitorFatture: require("./monitor-gestionale-fatture.js"),
 }
 

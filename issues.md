@@ -11,3 +11,5 @@ ERROR INSERTING: { MongoError: Topology was destroyed
     at /home/massimo/workspace/bac-gestionale-interface/node_modules/mongodb/lib/utils.js:437:24 name: 'MongoError', [Symbol(mongoErrorContextSymbol)]: {}}
 
 
+https://stackoverflow.com/questions/30909492/mongoerror-topology-was-destroyed
+

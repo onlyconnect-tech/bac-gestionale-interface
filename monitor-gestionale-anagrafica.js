@@ -32,7 +32,7 @@ observable.subscribe((record) => {
     return doInsertRecord(dbMongo, record).then((result) => {
 
     }, (err) => {
-        console.log("ERROR:", err.message);
+        console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
     });
 
 }, (err) => {
