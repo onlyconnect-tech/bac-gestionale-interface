@@ -113,7 +113,7 @@ async function doInsertRecord(db, record) {
 
 
         if (isNaN(info.codiceCli)) {
-            const message ='INVALID RECORD: '.concat(sequenceNumber, ', error parsing - codiceCliente: \'', info.codiceCli, '\'');
+            const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
             logger.warn(message);
             return reject(new Error(message));
         }
