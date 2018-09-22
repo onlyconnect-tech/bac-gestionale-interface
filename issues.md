@@ -1,16 +1,3 @@
-ERROR INSERTING: Error: INVALID RECORD: [object Object]
-    at /home/massimo/workspace/bac-gestionale-interface/monitor-gestionale-anagrafica.js:159:27
-    at new Promise (<anonymous>)
-    at doInsertRecord (/home/massimo/workspace/bac-gestionale-interface/monitor-gestionale-anagrafica.js:125:12)
-    at SafeSubscriber._cca‍.r.observable.subscribe [as _next] (/home/massimo/workspace/bac-gestionale-interface/monitor-gestionale-anagrafica.js:32:12)
-    at SafeSubscriber.__tryOrUnsub (/home/massimo/workspace/bac-gestionale-interface/node_modules/rxjs/internal/Subscriber.js:222:16)
-    at SafeSubscriber.next (/home/massimo/workspace/bac-gestionale-interface/node_modules/rxjs/internal/Subscriber.js:160:22)
-    at Subscriber._next (/home/massimo/workspace/bac-gestionale-interface/node_modules/rxjs/internal/Subscriber.js:93:26)
-    at Subscriber.next (/home/massimo/workspace/bac-gestionale-interface/node_modules/rxjs/internal/Subscriber.js:68:18)
-    at Parser.parser.on (/home/massimo/workspace/bac-gestionale-interface/monitor-gestionale-anagrafica.js:67:19)
-    at Parser.emit (events.js:180:13)
-
-
 ERROR INSERTING: { MongoError: Topology was destroyed
     at initializeCursor (/home/massimo/workspace/bac-gestionale-interface/node_modules/mongodb-core/lib/cursor.js:766:25)
     at nextFunction (/home/massimo/workspace/bac-gestionale-interface/node_modules/mongodb-core/lib/cursor.js:591:12)

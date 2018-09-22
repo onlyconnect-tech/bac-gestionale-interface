@@ -32,12 +32,12 @@ observable.subscribe((record) => {
     return doInsertRecord(dbMongo, record).then((result) => {
 
     }, (err) => {
-        console.log("ERROR INSERTING:", err);
+        console.log("ERROR:", err.message);
     });
 
 }, (err) => {
 
-    console.log(err);
+    console.log("ERROR:", err);
 
 }, () => {
 
@@ -155,8 +155,9 @@ async function doInsertRecord(db, record) {
 
 
         if (isNaN(info.codiceCli)) {
-            logger.warn('INVALID RECORD:', record);
-            return reject(new Error('INVALID RECORD: ' + record));
+            const message ='INVALID RECORD: '.concat(sequenceNumber, ', error parsing - codiceCliente: \'', info.codiceCli, '\'');
+            logger.warn(message);
+            return reject(new Error(message));
         }
 
         logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
