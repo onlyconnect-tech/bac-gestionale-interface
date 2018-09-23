@@ -3,6 +3,8 @@ import {
     Observable
 } from "rxjs/Observable";
 
+import ParsingRecordError from "./exceptions/ParsingRecordError";
+
 const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
@@ -32,7 +34,14 @@ observable.subscribe((record) => {
     return doInsertRecord(dbMongo, record).then((result) => {
 
     }, (err) => {
-        console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+
+        if(err instanceof ParsingRecordError)
+            console.log("ERROR PARSING INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+        else {
+            // other error type
+            // send to error observer
+            console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+        }
     });
 
 }, (err) => {
@@ -115,7 +124,7 @@ async function doInsertRecord(db, record) {
         if (isNaN(info.codiceCli)) {
             const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
             logger.warn(message);
-            return reject(new Error(message));
+            return reject(new ParsingRecordError(message));
         }
 
         logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);

@@ -107,6 +107,8 @@ async function doInsertRecord(db, record) {
 
     const resultOp = await mongo.insertOrUpdateFattura(db, fattura);
 
+    console.log('debug', "SYNC FATTURA:", resultOp);
+
     return resultOp;
 
 }
