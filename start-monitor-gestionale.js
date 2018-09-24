@@ -24,11 +24,13 @@ const urlManogoDb = 'mongodb://localhost:27017';
 // 'myproject'
 const dbName = 'myproject';
 
-const fileName = './data/TABFST01.DBF';
+const fileNameFatture = './data/TABFST01.DBF';
 
-var synchronizerFatture = new SynchronizerFatture(fileName, urlManogoDb, dbName);
+const synchronizerFatture = new SynchronizerFatture(fileNameFatture, urlManogoDb, dbName);
 
-synchronizerFatture.doWork();
+synchronizerFatture.doWork().then((result) => {
+    console.log(result);
+});
 
 
 
