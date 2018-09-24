@@ -28,25 +28,50 @@ var observable = Observable.create(function subscribe(observer) {
     observerG = observer;
 });
 
-observable.subscribe((record) => {
+var accumulatorRecords = [];
 
-        return doInsertRecord(dbMongo, record).then((result) => {
+observable.subscribe(async (record) => {
+        const splitLength = 500;
+        accumulatorRecords.push(record);
+        if (accumulatorRecords.length == splitLength) {
+             const recordsBlock = accumulatorRecords;
+             
+             accumulatorRecords = [];
+             // call insert block
+             
+             try {
+                var results = await doProcessBlockRecords(recordsBlock);
+                console.log("+++++++", results);
+             } catch  (errs) {
+                console.log("*********", errs.message);
+             }
 
-        }, (err) => {
-            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-        });
+        }
+        
 
     }, (err) => {
 
         console.log(err);
 
     },
-    () => {
-        console.log('COMPLETE REACHED!!!');
+    async () => {
+        // done
 
-        mongo.closeClient();
+        // process last
+        try {
+            var results = await doProcessBlockRecords(accumulatorRecords);
+            console.log("+++++++", results);
+         } catch  (errs) {
+            console.log("*********", errs.message);
+         } finally {
+            console.log('COMPLETE REACHED!!!');
 
-        console.log('CLOSED CLIENT!!!');
+            mongo.closeClient();
+
+            console.log('CLOSED CLIENT!!!');
+         }
+
+        
     });
 
 mongo.getDB(url, dbName).then((db) => {
@@ -77,6 +102,19 @@ mongo.getDB(url, dbName).then((db) => {
     console.log("ERROR:", err);
 });
 
+async function doProcessBlockRecords(recordsBlock) {
+
+    return Promise.all(recordsBlock.map((record) => {
+        return doInsertRecord(dbMongo, record).then((result) => {
+            return result;
+        }, (err) => {
+            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+            return Promise.reject(err);
+        });
+
+     }));
+}
+
 async function doInsertRecord(db, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
@@ -98,10 +136,10 @@ async function doInsertRecord(db, record) {
         isDeleted: isDeleted
     };
 
-    /*
-    console.log("-idFattura: %d - addDoc: %s - datDoc: %s - codCliente: %d - totImp: %f - totIVA: %f - isDeleted:  %s", 
-        idFattura, annDoc, datDoc, codCliente, totImp, totIVA, isDeleted);
-    */
+    
+    console.log("-inserting fattura seqNumber: %d", 
+        seqNumberGest);
+    
 
     // check if !isDeleted
 
