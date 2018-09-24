@@ -7,6 +7,55 @@ const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
 
+async function doProcessBlockRecords(dbMongo, recordsBlock) {
+
+    return Promise.all(recordsBlock.map((record) => {
+        return doInsertRecord(dbMongo, record).then((result) => {
+            return result;
+        }, (err) => {
+            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+            return Promise.reject(err);
+        });
+
+    }));
+}
+
+async function doInsertRecord(db, record) {
+    var seqNumberGest = record['@sequenceNumber'];
+    var idFattura = record.NUMDOC;
+    var annDoc = record.ANNDOC;
+    var datDoc = record.DATDOC;
+    var codCliente = record.CODCF;
+    var totImp = record.TOTIMP;
+    var totIVA = record.TOTIVA;
+    var isDeleted = record['@deleted'];
+
+    var fattura = {
+        seqNumberGest: seqNumberGest,
+        idFattura: idFattura,
+        annDoc: annDoc,
+        datDoc: datDoc,
+        codCliente: codCliente,
+        totImp: totImp,
+        totIVA: totIVA,
+        isDeleted: isDeleted
+    };
+
+
+    console.log("-inserting fattura seqNumber: %d",
+        seqNumberGest);
+
+
+    // check if !isDeleted
+
+    const resultOp = await mongo.insertOrUpdateFattura(db, fattura);
+
+    console.log('debug', "SYNC FATTURA:", resultOp);
+
+    return resultOp;
+
+} // fine doInsertRecord
+
 class SynchronizerFatture {
 
     constructor(fileName, urlManogoDb, dbName) {
@@ -41,7 +90,7 @@ class SynchronizerFatture {
                     // call insert block
 
                     try {
-                        var results = await doProcessBlockRecords(recordsBlock);
+                        var results = await doProcessBlockRecords(dbMongo, recordsBlock);
                         console.log("+++++++", results);
                     } catch (errs) {
                         console.log("*********", errs.message);
@@ -60,7 +109,7 @@ class SynchronizerFatture {
 
                 // process last
                 try {
-                    var results = await doProcessBlockRecords(accumulatorRecords);
+                    var results = await doProcessBlockRecords(dbMongo, accumulatorRecords);
                     console.log("+++++++", results);
                 } catch (errs) {
                     console.log("*********", errs.message);
@@ -103,54 +152,6 @@ class SynchronizerFatture {
             console.log("ERROR:", err);
         });
 
-        async function doProcessBlockRecords(recordsBlock) {
-
-            return Promise.all(recordsBlock.map((record) => {
-                return doInsertRecord(dbMongo, record).then((result) => {
-                    return result;
-                }, (err) => {
-                    console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-                    return Promise.reject(err);
-                });
-
-            }));
-        }
-
-        async function doInsertRecord(db, record) {
-            var seqNumberGest = record['@sequenceNumber'];
-            var idFattura = record.NUMDOC;
-            var annDoc = record.ANNDOC;
-            var datDoc = record.DATDOC;
-            var codCliente = record.CODCF;
-            var totImp = record.TOTIMP;
-            var totIVA = record.TOTIVA;
-            var isDeleted = record['@deleted'];
-
-            var fattura = {
-                seqNumberGest: seqNumberGest,
-                idFattura: idFattura,
-                annDoc: annDoc,
-                datDoc: datDoc,
-                codCliente: codCliente,
-                totImp: totImp,
-                totIVA: totIVA,
-                isDeleted: isDeleted
-            };
-
-
-            console.log("-inserting fattura seqNumber: %d",
-                seqNumberGest);
-
-
-            // check if !isDeleted
-
-            const resultOp = await mongo.insertOrUpdateFattura(db, fattura);
-
-            console.log('debug', "SYNC FATTURA:", resultOp);
-
-            return resultOp;
-
-        } // fine doInsertRecord
 
 
     }
