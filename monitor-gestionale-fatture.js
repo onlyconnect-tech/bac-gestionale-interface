@@ -7,10 +7,10 @@ const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
 
-async function doProcessBlockRecords(dbMongo, recordsBlock) {
+async function doProcessBlockRecords(mongo, dbMongo, recordsBlock) {
 
     return Promise.all(recordsBlock.map((record) => {
-        return doInsertRecord(dbMongo, record).then((result) => {
+        return doInsertRecord(mongo, dbMongo, record).then((result) => {
             return result;
         }, (err) => {
             console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
@@ -20,7 +20,7 @@ async function doProcessBlockRecords(dbMongo, recordsBlock) {
     }));
 }
 
-async function doInsertRecord(db, record) {
+async function doInsertRecord(mongo, db, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
@@ -90,7 +90,8 @@ class SynchronizerFatture {
                     // call insert block
 
                     try {
-                        var results = await doProcessBlockRecords(dbMongo, recordsBlock);
+                        console.log(dbMongo);
+                        var results = await doProcessBlockRecords(mongo, dbMongo, recordsBlock);
                         console.log("+++++++", results);
                     } catch (errs) {
                         console.log("*********", errs.message);
@@ -109,7 +110,7 @@ class SynchronizerFatture {
 
                 // process last
                 try {
-                    var results = await doProcessBlockRecords(dbMongo, accumulatorRecords);
+                    var results = await doProcessBlockRecords(mongo, dbMongo, accumulatorRecords);
                     console.log("+++++++", results);
                 } catch (errs) {
                     console.log("*********", errs.message);
