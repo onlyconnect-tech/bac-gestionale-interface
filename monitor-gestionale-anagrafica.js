@@ -9,170 +9,173 @@ const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
 
-// Connection URL
-const url = 'mongodb://localhost:27017';
+async function doInsertRecord(mongo, db, record) {
 
-// Database Name
-// 'myproject'
-const dbName = 'myproject';
+    var isDeleted = record['@deleted'];
+    var sequenceNumber = record['@sequenceNumber'];
 
-var numRow = 0;
-let parser = new Parser('./data/ANACF.DBF');
+    logger.debug('--> sequenceNumber: %d . isDeleted: %s', sequenceNumber, isDeleted);
 
-const mongo = new Mongo();
+    if (record.CLFR === 'F') {
 
-var dbMongo;
+        return;
+    }
 
-var observerG;
+    const info = {
+        codiceCli: record.CODCF,
+        ragSoc: record.RAGSOC,
+        indSedeLeg: record.INDIR,
+        ragSoc2: record.RAGSOC2,
+        codiceFisc: record.CODFISC,
+        pIva: record.PARTIVA,
+        cap: record.CAP,
+        localita: record.LOCAL,
+        prov: record.PROV
+    };
 
-var observable = Observable.create(function subscribe(observer) {
-    observerG = observer;
-});
 
-observable.subscribe((record) => {
+    let ragSoc = info.ragSoc;
+    if (info.ragSoc2) {
+        ragSoc = ragSoc + ' - ' + info.ragSoc2;
+    }
 
-    return doInsertRecord(dbMongo, record).then((result) => {
 
-    }, (err) => {
 
-        if(err instanceof ParsingRecordError)
-            console.log("ERROR PARSING INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-        else {
-            // other error type
-            // send to error observer
-            console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-        }
-    });
+    if (isNaN(info.codiceCli)) {
+        const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
+        logger.warn(message);
+        throw new ParsingRecordError(message);
+    }
 
-}, (err) => {
+    logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
 
-    console.log("ERROR:", err);
+    // info.localita, info.cap, info.prov
+    var location = {
+        localita: info.localita,
+        cap: info.cap,
+        prov: info.prov
+    };
 
-}, () => {
+    try {
 
-    console.log('COMPLETE REACHED!!!');
+        // if op === 'INSERTED' add to sync operations
+        // if op === 'NONE' no need sync operations
 
-    mongo.closeClient();
-
-    console.log('CLOSED CLIENT!!!');
-});
-
-logger.log('info', 'test message %s', 'my string');
-
-mongo.getDB(url, dbName).then((db) => {
-    dbMongo = db;
-
-    parser.on('start', (p) => {
-        console.log('dBase file parsing has started');
-    });
-
-    parser.on('header', (h) => {
-        console.log('dBase file header has been parsed' + JSON.stringify(h));
-    });
-
-    parser.on('record', (record) => {
-        numRow++;
-        //console.log( JSON.stringify(record)); 
-        observerG.next(record);
-    });
-
-    parser.on('end', (p) => {
-        console.log('Finished parsing the dBase file - numRow: ' + numRow);
-        observerG.complete();
-    });
-
-    parser.parse();
-
-}, (err) => {
-    console.log("ERROR:", err);
-});
-
-async function doInsertRecord(db, record) {
-
-    return new Promise(async function (resolve, reject) {
-
-        var isDeleted = record['@deleted'];
-        var sequenceNumber = record['@sequenceNumber'];
-
-        logger.debug('--> sequenceNumber: %d . isDeleted: %s', sequenceNumber, isDeleted);
-
-        if (record.CLFR === 'F') {
-
-            return resolve();
-        }
-
-        const info = {
-            codiceCli: record.CODCF,
-            ragSoc: record.RAGSOC,
-            indSedeLeg: record.INDIR,
-            ragSoc2: record.RAGSOC2,
-            codiceFisc: record.CODFISC,
-            pIva: record.PARTIVA,
-            cap: record.CAP,
-            localita: record.LOCAL,
-            prov: record.PROV
+        var anagrafica = {
+            sequenceNumber: sequenceNumber,
+            isDeleted: isDeleted,
+            codiceCli: info.codiceCli,
+            ragSoc: ragSoc,
+            indSedeLeg: info.indSedeLeg,
+            codiceFisc: info.codiceFisc,
+            pIva: info.pIva,
+            location: location
         };
 
+        const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(db, anagrafica);
 
-        let ragSoc = info.ragSoc;
-        if (info.ragSoc2) {
-            ragSoc = ragSoc + ' - ' + info.ragSoc2;
-        }
+        logger.log('debug', "SYNC ANAG:", restInsertAnagrafica);
 
+        // if op === 'INSERT' add to sync operations
+        // if op === 'UPDATE' add to sync operations
+        // if op === 'NONE' no need sync operations
 
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
 
-        if (isNaN(info.codiceCli)) {
-            const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
-            logger.warn(message);
-            return reject(new ParsingRecordError(message));
-        }
+    return;
 
-        logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
-
-        var mongo = new Mongo();
-
-        // info.localita, info.cap, info.prov
-        var location = {
-            localita: info.localita,
-            cap: info.cap,
-            prov: info.prov
-        };
-
-        try {
-
-            // if op === 'INSERTED' add to sync operations
-            // if op === 'NONE' no need sync operations
-
-            var anagrafica = {
-                sequenceNumber: sequenceNumber,
-                isDeleted: isDeleted,
-                codiceCli: info.codiceCli,
-                ragSoc: ragSoc,
-                indSedeLeg: info.indSedeLeg,
-                codiceFisc: info.codiceFisc,
-                pIva: info.pIva,
-                location: location
-            };
-
-            const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(db, anagrafica);
-
-            logger.log('debug', "SYNC ANAG:", restInsertAnagrafica);
-
-            // if op === 'INSERT' add to sync operations
-            // if op === 'UPDATE' add to sync operations
-            // if op === 'NONE' no need sync operations
-
-
-
-
-        } catch (err) {
-            logger.log('error', "%s", err);
-            console.log(err);
-        }
-
-        resolve();
-
-
-    });
 
 }
+
+
+class SynchronizerAnagrafica {
+
+    constructor(fileName, urlManogoDb, dbName) {
+        this.fileName = fileName;
+        this.urlManogoDb = urlManogoDb;
+        this.dbName = dbName;
+        this.numRow = 0;
+    }
+
+    doWork() {
+
+        const parser = new Parser(this.fileName);
+
+        const mongo = new Mongo();
+
+        var dbMongo;
+
+        var observerG;
+
+        var observable = Observable.create(function subscribe(observer) {
+            observerG = observer;
+        });
+
+        observable.subscribe((record) => {
+
+            return doInsertRecord(mongo, dbMongo, record).then((result) => {
+
+            }, (err) => {
+
+                if (err instanceof ParsingRecordError)
+                    console.log("ERROR PARSING INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+                else {
+                    // other error type
+                    // send to error observer
+                    console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+                }
+            });
+
+        }, (err) => {
+
+            console.log("ERROR:", err);
+
+        }, () => {
+
+            console.log('COMPLETE REACHED!!!');
+
+            mongo.closeClient();
+
+            console.log('CLOSED CLIENT!!!');
+        });
+
+        logger.log('info', 'test message %s', 'my string');
+
+        mongo.getDB(this.urlManogoDb, this.dbName).then((db) => {
+            dbMongo = db;
+
+            parser.on('start', (p) => {
+                console.log('dBase file parsing has started');
+            });
+
+            parser.on('header', (h) => {
+                console.log('dBase file header has been parsed' + JSON.stringify(h));
+            });
+
+            parser.on('record', (record) => {
+                this.numRow++;
+                //console.log( JSON.stringify(record)); 
+                observerG.next(record);
+            });
+
+            parser.on('end', (p) => {
+                console.log('Finished parsing the dBase file - numRow: ' + this.numRow);
+                observerG.complete();
+            });
+
+            parser.parse();
+
+        }, (err) => {
+            console.log("ERROR:", err);
+        });
+
+
+
+    }
+
+}
+
+module.exports = SynchronizerAnagrafica;
