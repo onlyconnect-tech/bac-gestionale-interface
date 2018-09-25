@@ -9,6 +9,19 @@ const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
 
+async function doProcessBlockRecords(mongo, dbMongo, recordsBlock) {
+
+    return Promise.all(recordsBlock.map((record) => {
+        return doInsertRecord(mongo, dbMongo, record).then((result) => {
+            return result;
+        }, (err) => {
+            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+            return Promise.reject(err);
+        });
+
+    }));
+}
+
 async function doInsertRecord(mongo, db, record) {
 
     var isDeleted = record['@deleted'];
@@ -18,7 +31,10 @@ async function doInsertRecord(mongo, db, record) {
 
     if (record.CLFR === 'F') {
 
-        return;
+        return {
+            op: 'INVALID_TYPE',
+            anagraficaId: -1
+        };
     }
 
     const info = {
@@ -44,7 +60,10 @@ async function doInsertRecord(mongo, db, record) {
     if (isNaN(info.codiceCli)) {
         const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
         logger.warn(message);
-        throw new ParsingRecordError(message);
+        return {
+            op: 'INVALID_PARSING',
+            anagraficaId: -1
+        };
     }
 
     logger.debug('----> inserting - codCli: %d, ragSoc: %s, sedeLeg: %s, codFisc: %s, pIva: %s', info.codiceCli, ragSoc, info.indSedeLeg, info.codiceFisc, info.pIva);
@@ -80,13 +99,14 @@ async function doInsertRecord(mongo, db, record) {
         // if op === 'UPDATE' add to sync operations
         // if op === 'NONE' no need sync operations
 
+        return restInsertAnagrafica;
+
     } catch (err) {
-        console.log(err);
+
+        console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
         throw err;
+
     }
-
-    return;
-
 
 }
 
@@ -102,80 +122,106 @@ class SynchronizerAnagrafica {
 
     doWork() {
 
-        const parser = new Parser(this.fileName);
+        return new Promise((resolve, reject) => {
+                const parser = new Parser(this.fileName);
 
-        const mongo = new Mongo();
+                const mongo = new Mongo();
 
-        var dbMongo;
+                var dbMongo;
 
-        var observerG;
+                var observerG;
 
-        var observable = Observable.create(function subscribe(observer) {
-            observerG = observer;
-        });
+                var accumulatorRecords = [];
 
-        observable.subscribe((record) => {
+                var observable = Observable.create(function subscribe(observer) {
+                    observerG = observer;
+                });
 
-            return doInsertRecord(mongo, dbMongo, record).then((result) => {
+                observable.subscribe(async (record) => {
+                    const splitLength = 500;
+                    accumulatorRecords.push(record);
+                    if (accumulatorRecords.length == splitLength) {
+                        const recordsBlock = accumulatorRecords;
 
-            }, (err) => {
+                        accumulatorRecords = [];
+                        // call insert block
 
-                if (err instanceof ParsingRecordError)
-                    console.log("ERROR PARSING INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-                else {
-                    // other error type
-                    // send to error observer
-                    console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-                }
-            });
+                        try {
+                            var results = await doProcessBlockRecords(mongo, dbMongo, recordsBlock);
+                            console.log("+++++++", results);
+                        } catch (errs) {
+                            // skip other processing
+                            console.log("*********", errs.message);
+                        }
 
-        }, (err) => {
-
-            console.log("ERROR:", err);
-
-        }, () => {
-
-            console.log('COMPLETE REACHED!!!');
-
-            mongo.closeClient();
-
-            console.log('CLOSED CLIENT!!!');
-        });
-
-        logger.log('info', 'test message %s', 'my string');
-
-        mongo.getDB(this.urlManogoDb, this.dbName).then((db) => {
-            dbMongo = db;
-
-            parser.on('start', (p) => {
-                console.log('dBase file parsing has started');
-            });
-
-            parser.on('header', (h) => {
-                console.log('dBase file header has been parsed' + JSON.stringify(h));
-            });
-
-            parser.on('record', (record) => {
-                this.numRow++;
-                //console.log( JSON.stringify(record)); 
-                observerG.next(record);
-            });
-
-            parser.on('end', (p) => {
-                console.log('Finished parsing the dBase file - numRow: ' + this.numRow);
-                observerG.complete();
-            });
-
-            parser.parse();
-
-        }, (err) => {
-            console.log("ERROR:", err);
-        });
+                    }
 
 
+                }, (err) => {
+
+                    console.log("ERROR:", err);
+
+                    /*
+                        
+                        */
+
+                }, async () => {
+                    // done
+
+                    // process last
+                    try {
+                        var results = await doProcessBlockRecords(mongo, dbMongo, accumulatorRecords);
+                        console.log("+++++++", results);
+                    } catch (errs) {
+                        console.log("*********", errs.message);
+                    } finally {
+                        console.log('COMPLETE REACHED!!!');
+
+                        mongo.closeClient();
+
+                        console.log('CLOSED CLIENT!!!');
+
+                        resolve({
+                            status: "OK",
+                            numRow: this.numRow
+                        });
+                    }
+                });
+
+                logger.log('info', 'test message %s', 'my string');
+
+                mongo.getDB(this.urlManogoDb, this.dbName).then((db) => {
+                    dbMongo = db;
+
+                    parser.on('start', (p) => {
+                        console.log('dBase file parsing has started');
+                    });
+
+                    parser.on('header', (h) => {
+                        console.log('dBase file header has been parsed' + JSON.stringify(h));
+                    });
+
+                    parser.on('record', (record) => {
+                        this.numRow++;
+                        //console.log( JSON.stringify(record)); 
+                        observerG.next(record);
+                    });
+
+                    parser.on('end', (p) => {
+                        console.log('Finished parsing the dBase file - numRow: ' + this.numRow);
+                        observerG.complete();
+                    });
+
+                    parser.parse();
+
+                }, (err) => {
+                    console.log("ERROR:", err);
+                });
+
+            }); // close promise
+
+        } // fine doWork
 
     }
 
-}
-
-module.exports = SynchronizerAnagrafica;
+    module.exports = SynchronizerAnagrafica;

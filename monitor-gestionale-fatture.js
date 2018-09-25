@@ -75,12 +75,12 @@ class SynchronizerFatture {
 
             var observerG;
 
+            var accumulatorRecords = [];
+
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
             });
-
-            var accumulatorRecords = [];
-
+ 
             observable.subscribe(async (record) => {
                     const splitLength = 500;
                     accumulatorRecords.push(record);
@@ -91,7 +91,6 @@ class SynchronizerFatture {
                         // call insert block
 
                         try {
-                            console.log(dbMongo);
                             var results = await doProcessBlockRecords(mongo, dbMongo, recordsBlock);
                             console.log("+++++++", results);
                         } catch (errs) {
