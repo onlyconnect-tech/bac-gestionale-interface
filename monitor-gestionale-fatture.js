@@ -7,10 +7,10 @@ const logger = require('./config/winston.js');
 
 import Mongo from './lib/mongo';
 
-async function doProcessBlockRecords(mongo, dbMongo, recordsBlock) {
+async function doProcessBlockRecords(mongo, recordsBlock) {
 
     return Promise.all(recordsBlock.map((record) => {
-        return doInsertRecord(mongo, dbMongo, record).then((result) => {
+        return doInsertRecord(mongo, record).then((result) => {
             return result;
         }, (err) => {
             console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
@@ -20,7 +20,7 @@ async function doProcessBlockRecords(mongo, dbMongo, recordsBlock) {
     }));
 }
 
-async function doInsertRecord(mongo, db, record) {
+async function doInsertRecord(mongo, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
@@ -31,7 +31,7 @@ async function doInsertRecord(mongo, db, record) {
     var isDeleted = record['@deleted'];
 
     var fattura = {
-        seqNumberGest: seqNumberGest,
+        _id: seqNumberGest,
         idFattura: idFattura,
         annDoc: annDoc,
         datDoc: datDoc,
@@ -42,15 +42,16 @@ async function doInsertRecord(mongo, db, record) {
     };
 
 
-    console.log("-inserting fattura seqNumber: %d",
+    console.log("----> CHECKING FATTURA seqNumber: %d",
         seqNumberGest);
 
 
     // check if !isDeleted
 
-    const resultOp = await mongo.insertOrUpdateFattura(db, fattura);
+    const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
-    console.log('debug', "SYNC FATTURA:", resultOp);
+    if(resultOp.op !== 'NONE')
+        console.log('debug', "SYNC FATTURA:", resultOp);
 
     return resultOp;
 
@@ -69,9 +70,7 @@ class SynchronizerFatture {
 
         return new Promise((resolve, reject) => {
             const parser = new Parser(this.fileName);
-            const mongo = new Mongo();
-
-            var dbMongo;
+            const mongo = new Mongo(this.urlManogoDb, this.dbName);
 
             var observerG;
 
@@ -91,10 +90,10 @@ class SynchronizerFatture {
                         // call insert block
 
                         try {
-                            var results = await doProcessBlockRecords(mongo, dbMongo, recordsBlock);
-                            console.log("+++++++", results);
+                            var results = await doProcessBlockRecords(mongo, recordsBlock);
+                            console.log("BLOCK FATTURE PROCESSED");
                         } catch (errs) {
-                            console.log("*********", errs.message);
+                            console.log("ERROR:", errs.message);
                         }
 
                     }
@@ -110,10 +109,10 @@ class SynchronizerFatture {
 
                     // process last
                     try {
-                        var results = await doProcessBlockRecords(mongo, dbMongo, accumulatorRecords);
-                        console.log("+++++++", results);
+                        var results = await doProcessBlockRecords(mongo, accumulatorRecords);
+                        console.log("BLOCK FATTURE PROCESSED", result);
                     } catch (errs) {
-                        console.log("*********", errs.message);
+                        console.log("ERROR:", errs.message);
                     } finally {
                         console.log('COMPLETE REACHED!!!');
 
@@ -127,8 +126,7 @@ class SynchronizerFatture {
 
                 });
 
-            mongo.getDB(this.urlManogoDb, this.dbName).then((db) => {
-                dbMongo = db;
+            mongo.initDBConnection().then(() => {
 
                 parser.on('start', (p) => {
                     console.log('dBase file parsing has started');
