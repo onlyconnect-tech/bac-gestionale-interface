@@ -4,10 +4,6 @@ const Joi = require('joi');
 const Bounce = require('bounce');
 const Promise = require('bluebird');
 
-import Mongo from './lib/mongo';
-
-const mongo = new Mongo();
-
 const handleError = function (request, h, err) {
 
     /*
@@ -43,9 +39,18 @@ const routes = [{
     path: '/anagrafica',
     handler: async function (request, h) {
         
-        var responseResults;
+        const mongo = this.mongo;
+                
+        var  res;
         
-        var  res = await mongo.findAnagrafica(this.db);
+        try {
+            res = await mongo.findAnagrafica();
+        
+        } catch (err) {
+            // res = "CUNARDO!!";
+            console.log("ERR:", err);
+            Bounce.rethrow(err, 'system');
+        }
 
         console.log("res --->");
  
@@ -56,10 +61,10 @@ const routes = [{
     path: '/delete-anagrafica',
     handler: async function (request, h) {
         
-        var responseResults;
+        const mongo = this.mongo;
 
         try {
-          await mongo.deleteAnagrafiche(this.db);
+          await mongo.deleteAnagrafiche();
         
           return {OP: 'delete-anagrafica', RESULT: 'OK'};
         } catch(e) {
@@ -70,18 +75,18 @@ const routes = [{
     method: 'GET',
     path: '/last-anagrafica',
     handler: async function (request, h) {
-                
-        return mongo.findLastAnagrafichaNumber(this.db);
+        
+        const mongo = this.mongo;
+
+        return mongo.findLastAnagrafichaNumber();
     }
 }, {
     method: 'GET',
     path: '/get-anagrafica/{ids}',
     handler: async function (request, h) {
 
-        var db = this.db;
+        const mongo = this.mongo;
         
-        var responseResults;
-
         // find id-values
 
         var ids = request.params.ids;
@@ -110,7 +115,7 @@ const routes = [{
         }).then(function(values) {
             return Promise.all(values.map((sequenceNumber) => {
 
-                var p = mongo.findAnagraficheBySequenceNumber(db, parseInt(sequenceNumber));
+                var p = mongo.findAnagraficheBySequenceNumber(parseInt(sequenceNumber));
                 
                 return p;
             }));
@@ -131,13 +136,13 @@ const routes = [{
     }, 
     handler: async function (request, h) {
         
-        var responseResults;
+        const mongo = this.mongo;
 
         // find id-values
 
         var id = request.params.id;
 
-        return mongo.findAnagraficheBySequenceNumber(this.db, id);
+        return mongo.findAnagraficheBySequenceNumber(id);
         
         }
     }, {  
@@ -163,31 +168,39 @@ const routes = [{
           path: '/location',
           handler: async function (request, h){
 
-            return mongo.findLocation(this.db).toArray();
+            const mongo = this.mongo;
+
+            return mongo.findLocation().toArray();
           }
       }, {
         method: 'GET',
         path: '/group-anagrafica-by-location',
         handler: async function (request, h){
 
-          return mongo.groupAnagraficaByLocations(this.db);
+          const mongo = this.mongo;
+
+          return mongo.groupAnagraficaByLocations();
         }
     }, {
         method: 'GET',
         path: '/find-orphan-location',
         handler: async function (request, h){
+          
+          const mongo = this.mongo;
 
-          return mongo.findOrphanLocations(this.db);
+          return mongo.findOrphanLocations();
         }
     }, {
         method: 'GET',
         path: '/get-anagrafica-by-location/{location}',
         handler: async function (request, h){
+          const mongo = this.mongo;
+          
           var locationName = request.params.location;
 
           console.log('GET BY LOCATION:', locationName);
           
-          return mongo.getAnagraficaByLocation(this.db, locationName);
+          return mongo.getAnagraficaByLocation(locationName);
         }
     }
 

@@ -31,12 +31,12 @@ const init = async () => {
         });
       });
 
-    const mongo = new Mongo();
+    const mongo = new Mongo(url, dbName);
     
-    db = await mongo.getDB(url, dbName);
+    await mongo.initDBConnection();
 
     // registre mongo e db
-    server.bind({db: db, message: 'PIPPO'});
+    server.bind({ mongo: mongo });
 
     server.route(routers);
 
