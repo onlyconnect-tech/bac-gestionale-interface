@@ -12,9 +12,6 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
     return Promise.all(recordsBlock.map((record) => {
         return doInsertRecord(mongo, record).then((result) => {
             return result;
-        }, (err) => {
-            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-            return Promise.reject(err);
         });
 
     }));
@@ -74,6 +71,7 @@ class SynchronizerFatture {
             var observerG;
 
             var accumulatorRecords = [];
+            var numErrors = 0;
 
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
@@ -92,6 +90,8 @@ class SynchronizerFatture {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
                             console.log("BLOCK FATTURE PROCESSED");
                         } catch (errs) {
+                            numErrors++;
+
                             console.log("ERROR:", errs.message);
                         }
 
@@ -111,6 +111,8 @@ class SynchronizerFatture {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
                         console.log("BLOCK FATTURE PROCESSED");
                     } catch (errs) {
+                        numErrors++;
+
                         console.log("ERROR:", errs.message);
                     } finally {
                         console.log('COMPLETE REACHED!!!');
@@ -119,7 +121,18 @@ class SynchronizerFatture {
 
                         console.log('CLOSED CLIENT!!!');
 
-                        resolve({ status: "OK", numRow: this.numRow});
+                        if ( numErrors !== 0) {
+                            return resolve({
+                                status: "ERROR",
+                                numRow: this.numRow,
+                                numErrors: numErrors
+                            }); 
+                        } 
+
+                        resolve({
+                            status: "OK",
+                            numRow: this.numRow
+                        });
                     }
 
 
@@ -150,6 +163,7 @@ class SynchronizerFatture {
 
             }, (err) => {
                 console.log("ERROR:", err);
+                reject(err);
             });
 
         });

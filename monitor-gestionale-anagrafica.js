@@ -12,9 +12,6 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
     return Promise.all(recordsBlock.map((record) => {
         return doInsertRecord(mongo, record).then((result) => {
             return result;
-        }, (err) => {
-            console.log("ERROR INSERTING FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
-            return Promise.reject(err);
         });
 
     }));
@@ -127,6 +124,7 @@ class SynchronizerAnagrafica {
                 var observerG;
 
                 var accumulatorRecords = [];
+                var numErrors = 0;
 
                 var observable = Observable.create(function subscribe(observer) {
                     observerG = observer;
@@ -145,6 +143,7 @@ class SynchronizerAnagrafica {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
                             console.log("BLOCK ANAGRAFICHE PROCESSED");
                         } catch (errs) {
+                            numErrors ++;
                             // skip other processing
                             console.log("ERROR:", errs.message);
                         }
@@ -168,6 +167,8 @@ class SynchronizerAnagrafica {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
                         console.log("BLOCK ANAGRAFICHE PROCESSED");
                     } catch (errs) {
+                        numErrors++;
+
                         console.log("ERROR:", errs.message);
                     } finally {
                         console.log('COMPLETE REACHED!!!');
@@ -175,6 +176,14 @@ class SynchronizerAnagrafica {
                         mongo.closeClient();
 
                         console.log('CLOSED CLIENT!!!');
+
+                        if ( numErrors !== 0) {
+                            return resolve({
+                                status: "ERROR",
+                                numRow: this.numRow,
+                                numErrors: numErrors
+                            }); 
+                        } 
 
                         resolve({
                             status: "OK",
@@ -210,6 +219,7 @@ class SynchronizerAnagrafica {
 
                 }, (err) => {
                     console.log("ERROR:", err);
+                    reject(err);
                 });
 
             }); // close promise

@@ -48,6 +48,9 @@ https://patrick-meier.io/build-a-restful-api-using-hapi-js-and-mongodb/
 https://www.infoq.com/articles/Starting-With-MongoDB
 
 
+http://adampaxton.com/handling-multiple-javascript-promises-even-if-some-fail/
+
+
 
 
 
