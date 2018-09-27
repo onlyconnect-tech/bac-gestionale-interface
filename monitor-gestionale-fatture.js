@@ -42,8 +42,7 @@ async function doInsertRecord(mongo, record) {
     };
 
 
-    console.log("----> CHECKING FATTURA seqNumber: %d",
-        seqNumberGest);
+    console.log("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
 
 
     // check if !isDeleted
@@ -110,7 +109,7 @@ class SynchronizerFatture {
                     // process last
                     try {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
-                        console.log("BLOCK FATTURE PROCESSED", result);
+                        console.log("BLOCK FATTURE PROCESSED");
                     } catch (errs) {
                         console.log("ERROR:", errs.message);
                     } finally {

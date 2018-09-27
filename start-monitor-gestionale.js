@@ -48,9 +48,47 @@ synchronizerAnagrafica.doWork().then((result) => {
 
 */
 
-Promise.all([ synchronizerFatture.doWork(), synchronizerAnagrafica.doWork()]).then( (results) => {
-    console.log(results);
-} ).catch( (err) => {
-    console.log(err);
-});
+// format seconds in minutes and seconds part
+function formatSeconds(seconds) {
+    
+    const minutes = Math.floor(seconds / 60);
+
+    const rest = seconds % 60;
+
+    return [minutes, rest];
+
+}
+
+const init = async () => {
+
+    const startSyncAnag = process.hrtime();
+
+    try {
+        const resAnag = await synchronizerAnagrafica.doWork();
+        console.log(resAnag);
+    } catch (err) {
+        console.log(err);
+    } finally {
+        const diff = process.hrtime(startSyncAnag);
+        const fDiff = formatSeconds(diff[0]);
+        console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+    }
+
+    const startSyncFatt = process.hrtime();
+
+    try {
+        const resFatt = await synchronizerFatture.doWork();
+        console.log(resFatt);
+    } catch (err) {
+        console.log(err);
+    } finally {
+        const diff = process.hrtime(startSyncFatt);
+        const fDiff = formatSeconds(diff[0]);
+        console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+    }
+
+    
+}
+
+init();
 
