@@ -65,9 +65,15 @@ const syncrAnagrafica = async () => {
 
     try {
         const resAnag = await synchronizerAnagrafica.doWork();
-        console.log(resAnag);
+        // console.log(resAnag);
+        return resAnag;
     } catch (err) {
         console.log(err);
+        return {
+            status: "ERROR",
+            numRow: -1,
+            numErrors: -1
+        };
     } finally {
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);
@@ -82,9 +88,15 @@ const syncrFatture = async () => {
 
     try {
         const resFatt = await synchronizerFatture.doWork();
-        console.log(resFatt);
+        // console.log(resFatt);
+        return resFatt;
     } catch (err) {
         console.log(err);
+        return {
+            status: "ERROR",
+            numRow: -1,
+            numErrors: -1
+        };
     } finally {
         const diff = process.hrtime(startSyncFatt);
         const fDiff = formatSeconds(diff[0]);

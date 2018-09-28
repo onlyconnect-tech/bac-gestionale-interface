@@ -70,7 +70,7 @@ class SynchronizerFatture {
     }
 
     doWork() {
-
+        this.numRow = 0; // reset
         return new Promise((resolve, reject) => {
             const parser = new Parser(this.fileName);
             const mongo = new Mongo(this.urlManogoDb, this.dbName);

@@ -118,3 +118,26 @@ class StatusCheck {
     }
 }
 
+
+class MonitoringFilesController {
+
+
+    registerControll(fileName, cb){
+
+        // start the timer
+
+        
+    }
+
+    doStartControll(){
+
+    }
+
+    doStopControll(){
+
+    }
+
+}
+
+
+module.exports = MonitoringFilesController;

@@ -115,7 +115,7 @@ class SynchronizerAnagrafica {
     }
 
     doWork() {
-
+        this.numRow = 0; // reset 
         return new Promise((resolve, reject) => {
                 const parser = new Parser(this.fileName);
 
