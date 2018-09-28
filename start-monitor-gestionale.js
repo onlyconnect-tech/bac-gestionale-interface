@@ -59,7 +59,7 @@ function formatSeconds(seconds) {
 
 }
 
-const init = async () => {
+const syncrAnagrafica = async () => {
 
     const startSyncAnag = process.hrtime();
 
@@ -74,6 +74,10 @@ const init = async () => {
         console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
+}
+
+const syncrFatture = async () => {
+
     const startSyncFatt = process.hrtime();
 
     try {
@@ -87,6 +91,13 @@ const init = async () => {
         console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
+}
+
+const init = async () => {
+
+   await syncrAnagrafica();
+
+   await syncrFatture();
     
 }
 

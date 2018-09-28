@@ -41,15 +41,22 @@ async function doInsertRecord(mongo, record) {
 
     console.log("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
 
+    
+    try {
 
-    // check if !isDeleted
+        const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
-    const resultOp = await mongo.insertOrUpdateFattura(fattura);
+        if (resultOp.op !== 'NONE')
+            console.log('debug', "SYNC FATTURA:", resultOp);
 
-    if(resultOp.op !== 'NONE')
-        console.log('debug', "SYNC FATTURA:", resultOp);
+        return resultOp;
 
-    return resultOp;
+    } catch (err) {
+
+        console.log("ERROR INSERT FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+        throw err;
+
+    }
 
 } // fine doInsertRecord
 
@@ -76,7 +83,7 @@ class SynchronizerFatture {
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
             });
- 
+
             observable.subscribe(async (record) => {
                     const splitLength = 500;
                     accumulatorRecords.push(record);
@@ -121,13 +128,13 @@ class SynchronizerFatture {
 
                         console.log('CLOSED CLIENT!!!');
 
-                        if ( numErrors !== 0) {
+                        if (numErrors !== 0) {
                             return resolve({
                                 status: "ERROR",
                                 numRow: this.numRow,
                                 numErrors: numErrors
-                            }); 
-                        } 
+                            });
+                        }
 
                         resolve({
                             status: "OK",

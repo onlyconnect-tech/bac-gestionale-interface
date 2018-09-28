@@ -53,4 +53,3 @@ http://adampaxton.com/handling-multiple-javascript-promises-even-if-some-fail/
 
 
 
-
