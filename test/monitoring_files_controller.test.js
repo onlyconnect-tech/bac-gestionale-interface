@@ -1,10 +1,29 @@
 'use strict'
 
-// require('../controller/monitoring_files_controller');
+const MonitoringFilesController = require('../controller/monitoring_files_controller');
 
-var x = new Date('2013-05-23');
-var y = new Date('2013-05-23');
+const FILE_TO_CHECK = './pippo.txt';
 
-if( x.getTime() == y.getTime()) {
-    console.log('EQUALS DATE-----');
+function simulateLongRun() {
+    console.log('STARTING OPERATION!!!');
+    return new Promise(function (resolve, reject) {
+
+        setTimeout(() => {
+            var num = Math.floor(Math.random() * 10);
+
+            if (num <= 7) {
+                console.log('OPERATION OK');
+                resolve();
+            } else {
+                console.log('OPERATION ERROR!!!');
+                reject();
+            }
+        }, 40 * 1000);
+    });
+
 }
+
+const monitoringFilesController = new MonitoringFilesController();
+
+monitoringFilesController.registerControll(FILE_TO_CHECK, simulateLongRun);
+
