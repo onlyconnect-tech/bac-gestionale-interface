@@ -13,7 +13,10 @@ class StatusCheck {
 
 class MonitoringFilesController {
 
-    constructor() {
+    constructor(frequency) {
+
+        this.frequency = frequency;
+
         this.operationMappings = new Map();
 
         this.filesToMonitor = new Map();
@@ -22,9 +25,7 @@ class MonitoringFilesController {
         this.filesModificationStatus = new Map();
     }
 
-    registerControll(fileName, cb) {
-
-        const FREQUENCY = 30; // seconds of frequency
+    async registerControll(fileName, cb) {
 
         const controller = () => {
 
@@ -45,14 +46,22 @@ class MonitoringFilesController {
                 // do syncr
 
                 // on finish
-                cb().then(() => {
-                    console.log('OK ECECUTION');
-                    // if OK
-                    var newStatus = this.filesModificationStatus.get(fileName);
-                    newStatus.working = false;
-                }, () => {
-                    console.log('ERROR EXECUTION --> RESETTING PREVIOUS STATE!!');
-                    this.filesModificationStatus.set(fileName, statusFile);
+                cb().then((result) => {
+                    
+                    console.log(result);
+
+                    if(result.status === 'OK') {
+                        console.log('OK ECECUTION');
+                        // if OK
+                        var newStatus = this.filesModificationStatus.get(fileName);
+                        newStatus.working = false;
+
+                    } else {
+
+                        console.log('ERROR EXECUTION --> RESETTING PREVIOUS STATE!!');
+                        this.filesModificationStatus.set(fileName, statusFile);
+                    }
+                    
                 });
 
 
@@ -75,15 +84,22 @@ class MonitoringFilesController {
 
                     // on finish
 
-                    cb().then(() => {
-                        console.log('OK SYNCRONIZATION');
-                        // if OK
-                        var newStatus = this.filesModificationStatus.get(fileName);
-                        newStatus.working = false;
-                    }, () => {
-                        console.log('FAILED SYNCRONIZATION');
-                        console.log('RESETTING PREVIOUS STATE!!');
-                        this.filesModificationStatus.set(fileName, statusFile);
+                    cb().then((result) => {
+
+                        console.log(result);
+
+                        if(result.status === 'OK') {
+                            console.log('OK SYNCRONIZATION');
+                            // if OK
+                            var newStatus = this.filesModificationStatus.get(fileName);
+                            newStatus.working = false;
+
+                        } else {
+                            console.log('FAILED SYNCRONIZATION');
+                            console.log('RESETTING PREVIOUS STATE!!');
+                            this.filesModificationStatus.set(fileName, statusFile);
+                        }
+
                     });
                 } else {
                     console.log("DO NOTHING");
@@ -98,8 +114,8 @@ class MonitoringFilesController {
 
         }
 
-        // setTimeout(controller, 0); // start now
-        const timer = setInterval(() => { controller(); }, FREQUENCY * 1000);
+        await controller(); // start now
+        const timer = setInterval(() => { controller(); }, this.frequency * 1000);
 
         this.operationMappings.set(fileName, {
             timer: timer

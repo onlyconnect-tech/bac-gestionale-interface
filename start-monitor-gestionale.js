@@ -18,10 +18,12 @@ exports.module = {
 
 const Logger = require('./config/winston');
 
+const MonitoringFilesController = require('./controller/monitoring_files_controller');
+
 const SynchronizerFatture = require("./monitor-gestionale-fatture");
 const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
 
-const logger = new Logger("MONITOR_GETIONALE");
+const logger = new Logger("MONITOR_GESTIONALE");
 
 // Connection URL
 const urlManogoDb = 'mongodb://localhost:27017';
@@ -118,5 +120,14 @@ const init = async () => {
     
 }
 
-init();
+// init();
+
+const FREQUENCY = 60;
+
+const monitoringFilesController = new MonitoringFilesController(FREQUENCY);
+
+monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
+
+monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
+
 
