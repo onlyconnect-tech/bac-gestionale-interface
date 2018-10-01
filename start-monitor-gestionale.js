@@ -15,8 +15,13 @@ exports.module = {
 */
 
 // require("./monitor-gestionale-anagrafica.js");
+
+const Logger = require('./config/winston');
+
 const SynchronizerFatture = require("./monitor-gestionale-fatture");
 const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
+
+const logger = new Logger("MONITOR_GETIONALE");
 
 // Connection URL
 const urlManogoDb = 'mongodb://localhost:27017';
@@ -68,7 +73,7 @@ const syncrAnagrafica = async () => {
         // console.log(resAnag);
         return resAnag;
     } catch (err) {
-        console.log(err);
+        logger.error("*** %s", err.message);
         return {
             status: "ERROR",
             numRow: -1,
@@ -77,7 +82,7 @@ const syncrAnagrafica = async () => {
     } finally {
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);
-        console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 }
@@ -91,7 +96,7 @@ const syncrFatture = async () => {
         // console.log(resFatt);
         return resFatt;
     } catch (err) {
-        console.log(err);
+        logger.error(err);
         return {
             status: "ERROR",
             numRow: -1,
@@ -100,7 +105,7 @@ const syncrFatture = async () => {
     } finally {
         const diff = process.hrtime(startSyncFatt);
         const fDiff = formatSeconds(diff[0]);
-        console.log(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 }

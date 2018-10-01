@@ -67,6 +67,10 @@ const options = {
         this.logger.log('info', message, ...args);
       }
 
+      warn(message, ...args) {
+        this.logger.log('warn', message, ...args);
+      }
+
       error(message, ...args) {
         this.logger.log('error', message, ...args);
       }

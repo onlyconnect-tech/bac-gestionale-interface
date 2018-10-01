@@ -3,7 +3,9 @@ import {
     Observable
 } from "rxjs/Observable";
 
-const logger = require('./config/winston.js');
+const Logger = require('./config/winston.js');
+
+const logger = new Logger('MG_ANAGRAFICA');
 
 import Mongo from './lib/mongo';
 
@@ -48,11 +50,8 @@ async function doInsertRecord(mongo, record) {
         ragSoc = ragSoc + ' - ' + info.ragSoc2;
     }
 
-
-
     if (isNaN(info.codiceCli)) {
-        const message = `INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`
-        logger.warn(message);
+        logger.warn(`INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: \'${info.codiceCli}\'`);
         return {
             op: 'INVALID_PARSING',
             anagraficaId: -1
@@ -87,7 +86,7 @@ async function doInsertRecord(mongo, record) {
         const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
 
         if(restInsertAnagrafica.op !== 'NONE')
-            logger.log('debug', "SYNC ANAG:", restInsertAnagrafica);
+            logger.info("SYNC ANAG: %j", restInsertAnagrafica);
 
         // if op === 'INSERT' add to sync operations
         // if op === 'UPDATE' add to sync operations
@@ -96,10 +95,8 @@ async function doInsertRecord(mongo, record) {
         return restInsertAnagrafica;
 
     } catch (err) {
-
-        console.log("ERROR INSERT ANAGRAFICA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+        logger.error("ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d",  err.message, record['@sequenceNumber']);
         throw err;
-
     }
 
 }
@@ -141,11 +138,11 @@ class SynchronizerAnagrafica {
 
                         try {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
-                            console.log("BLOCK ANAGRAFICHE PROCESSED");
+                            logger.info("BLOCK ANAGRAFICHE PROCESSED");
                         } catch (errs) {
                             numErrors ++;
                             // skip other processing
-                            console.log("ERROR:", errs.message);
+                            logger.error("ERROR: %s", errs.message);
                         }
 
                     }
@@ -153,7 +150,7 @@ class SynchronizerAnagrafica {
 
                 }, (err) => {
 
-                    console.log("ERROR:", err);
+                    logger.error("%s", err);
 
                     /*
                         
@@ -165,17 +162,15 @@ class SynchronizerAnagrafica {
                     // process last
                     try {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
-                        console.log("BLOCK ANAGRAFICHE PROCESSED");
+                        logger.debug("BLOCK ANAGRAFICHE PROCESSED");
                     } catch (errs) {
                         numErrors++;
 
-                        console.log("ERROR:", errs.message);
+                        logger.error("ERROR: %s", errs.message);
                     } finally {
-                        console.log('COMPLETE REACHED!!!');
+                        logger.info('COMPLETE REACHED!!!');
 
                         mongo.closeClient();
-
-                        console.log('CLOSED CLIENT!!!');
 
                         if ( numErrors !== 0) {
                             return resolve({
@@ -192,16 +187,14 @@ class SynchronizerAnagrafica {
                     }
                 });
 
-                logger.log('info', 'test message %s', 'my string');
-
                 mongo.initDBConnection().then(() => {
 
                     parser.on('start', (p) => {
-                        console.log('dBase file parsing has started');
+                        logger.info('dBase file parsing has started');
                     });
 
-                    parser.on('header', (h) => {
-                        console.log('dBase file header has been parsed' + JSON.stringify(h));
+                    parser.on('header', (h) => { 
+                        logger.info('dBase file header has been parsed %j', h);
                     });
 
                     parser.on('record', (record) => {
@@ -211,14 +204,14 @@ class SynchronizerAnagrafica {
                     });
 
                     parser.on('end', (p) => {
-                        console.log('Finished parsing the dBase file - numRow: ' + this.numRow);
+                        logger.info('Finished parsing the dBase file - numRow: %d', this.numRow);
                         observerG.complete();
                     });
 
                     parser.parse();
 
                 }, (err) => {
-                    console.log("ERROR:", err);
+                    logger.error("ERROR: %s", err);
                     reject(err);
                 });
 

@@ -3,7 +3,9 @@ import {
     Observable
 } from "rxjs/Observable";
 
-const logger = require('./config/winston.js');
+const Logger = require('./config/winston.js');
+
+const logger = new Logger('MG_FATTURE');
 
 import Mongo from './lib/mongo';
 
@@ -39,7 +41,7 @@ async function doInsertRecord(mongo, record) {
     };
 
 
-    console.log("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
+    logger.debug("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
 
     
     try {
@@ -47,13 +49,13 @@ async function doInsertRecord(mongo, record) {
         const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
         if (resultOp.op !== 'NONE')
-            console.log('debug', "SYNC FATTURA:", resultOp);
+            logger.info("SYNC FATTURA: %j", resultOp);
 
         return resultOp;
 
     } catch (err) {
 
-        console.log("ERROR INSERT FATTURA:", err.message, "- SEQUENCE NUMBER:", record['@sequenceNumber']);
+        logger.error("ERROR INSERT FATTURA: %s - SEQUENCE NUMBER: %d", err.message, record['@sequenceNumber']);
         throw err;
 
     }
@@ -95,11 +97,11 @@ class SynchronizerFatture {
 
                         try {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
-                            console.log("BLOCK FATTURE PROCESSED");
+                            logger.debug("BLOCK FATTURE PROCESSED");
                         } catch (errs) {
                             numErrors++;
 
-                            console.log("ERROR:", errs.message);
+                            logger.error("ERROR: %s", errs.message);
                         }
 
                     }
@@ -107,7 +109,7 @@ class SynchronizerFatture {
 
                 }, (err) => {
 
-                    console.log(err);
+                    logger.error("%s", err);
 
                 },
                 async () => {
@@ -116,17 +118,15 @@ class SynchronizerFatture {
                     // process last
                     try {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
-                        console.log("BLOCK FATTURE PROCESSED");
+                        logger.info("BLOCK FATTURE PROCESSED");
                     } catch (errs) {
                         numErrors++;
 
-                        console.log("ERROR:", errs.message);
+                        logger.error("ERROR: %s", errs.message);
                     } finally {
-                        console.log('COMPLETE REACHED!!!');
+                        logger.info('COMPLETE REACHED!!!');
 
                         mongo.closeClient();
-
-                        console.log('CLOSED CLIENT!!!');
 
                         if (numErrors !== 0) {
                             return resolve({
@@ -148,11 +148,11 @@ class SynchronizerFatture {
             mongo.initDBConnection().then(() => {
 
                 parser.on('start', (p) => {
-                    console.log('dBase file parsing has started');
+                    logger.info('dBase file parsing has started');
                 });
 
                 parser.on('header', (h) => {
-                    console.log('dBase file header has been parsed' + JSON.stringify(h));
+                    logger.info('dBase file header has been parsed - %j', h);
                 });
 
                 parser.on('record', (record) => {
@@ -162,14 +162,14 @@ class SynchronizerFatture {
                 });
 
                 parser.on('end', (p) => {
-                    console.log('Finished parsing the dBase file - numRow: ' + this.numRow);
+                    logger.info('Finished parsing the dBase file - numRow: %d', this.numRow);
                     observerG.complete();
                 });
 
                 parser.parse();
 
             }, (err) => {
-                console.log("ERROR:", err);
+                logger.error("ERROR: %s", err);
                 reject(err);
             });
 
