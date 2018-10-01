@@ -2,6 +2,10 @@
 
 const fs = require('fs');
 
+const Logger = require('../config/winston.js');
+
+const logger = new Logger("MONITORING_FILES_CONTROLLER");
+
 class StatusCheck {
 
     constructor(working, timeCheck) {
@@ -29,16 +33,17 @@ class MonitoringFilesController {
 
         const controller = () => {
 
-            console.log('START CHECKING:', new Date());
+            logger.debug('START CHECKING');
 
-            console.log("CONTAINS FILE CHANGED:", fileName, " -> ", this.filesToMonitor.get(fileName));
-            console.log("STATUS CHECKING:", fileName, " -> ", this.filesModificationStatus.get(fileName));
+            logger.debug("CONTAINS FILE CHANGED: %s -> %O", fileName, this.filesToMonitor.get(fileName));
+            logger.debug("STATUS CHECKING: %s -> %O", fileName, this.filesModificationStatus.get(fileName));
 
             var statusFile = this.filesModificationStatus.get(fileName);
 
             if (statusFile == null) {
 
-                console.log('FIRST TIME');
+                logger.debug('FIRST TIME');
+                logger.info("DOING SYNCR");
                 // do work
                 var now = new Date();
                 this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
@@ -48,17 +53,18 @@ class MonitoringFilesController {
                 // on finish
                 cb().then((result) => {
                     
-                    console.log(result);
+                    logger.debug("RESULT: %O", result);
 
                     if(result.status === 'OK') {
-                        console.log('OK ECECUTION');
+                        logger.info('OK SYNCRONIZATION');
                         // if OK
                         var newStatus = this.filesModificationStatus.get(fileName);
                         newStatus.working = false;
 
                     } else {
 
-                        console.log('ERROR EXECUTION --> RESETTING PREVIOUS STATE!!');
+                        logger.warn('FAILED SYNCRONIZATION');
+                        logger.debug('RESETTING PREVIOUS STATE!!');
                         this.filesModificationStatus.set(fileName, statusFile);
                     }
                     
@@ -68,13 +74,13 @@ class MonitoringFilesController {
 
             } else {
 
-                console.log("STATUS FILE:", statusFile);
+                logger.debug("STATUS FILE: %O", statusFile);
 
                 // check time 
                 if (!statusFile.working &&
                     (this.filesToMonitor.get(fileName) ? this.filesToMonitor.get(fileName).getTime() > statusFile.timeCheck : false)) {
 
-                    console.log("DOING SYNCR");
+                    logger.info("DOING SYNCR");
 
                     // do work
                     var now = new Date();
@@ -86,31 +92,30 @@ class MonitoringFilesController {
 
                     cb().then((result) => {
 
-                        console.log(result);
+                        logger.debug("RESULT: %O", result);
 
                         if(result.status === 'OK') {
-                            console.log('OK SYNCRONIZATION');
+                            logger.info('OK SYNCRONIZATION');
                             // if OK
                             var newStatus = this.filesModificationStatus.get(fileName);
                             newStatus.working = false;
 
                         } else {
-                            console.log('FAILED SYNCRONIZATION');
-                            console.log('RESETTING PREVIOUS STATE!!');
+                            logger.warn('FAILED SYNCRONIZATION');
+                            logger.debug('RESETTING PREVIOUS STATE!!');
                             this.filesModificationStatus.set(fileName, statusFile);
                         }
 
                     });
                 } else {
-                    console.log("DO NOTHING");
+                    logger.debug("DO NOTHING");
                 }
             }
 
-            console.log('****************** NOW **********************');
-            console.log("STATUS CHECKING:", fileName, " -> ", 
-                this.filesModificationStatus.get(fileName));
-            console.log("*********************************************");
-            console.log();
+            logger.debug('****************** NOW **********************');
+            logger.debug("STATUS CHECKING: %s -> %O", fileName, this.filesModificationStatus.get(fileName));
+            logger.debug("*********************************************");
+            logger.debug();
 
         }
 
