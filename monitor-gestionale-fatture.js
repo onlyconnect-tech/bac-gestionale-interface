@@ -28,6 +28,8 @@ async function doInsertRecord(mongo, record) {
     var codCliente = record.CODCF;
     var totImp = record.TOTIMP;
     var totIVA = record.TOTIVA;
+    var totRit = record.RTIMPRIT;
+    var rtimpNON = record.RTIMPNON;
     var isDeleted = record['@deleted'];
 
     var fattura = {
@@ -38,6 +40,8 @@ async function doInsertRecord(mongo, record) {
         codCliente: codCliente,
         totImp: totImp,
         totIVA: totIVA,
+        totRit: totRit,
+        rtimpNON: rtimpNON,
         isDeleted: isDeleted
     };
 
