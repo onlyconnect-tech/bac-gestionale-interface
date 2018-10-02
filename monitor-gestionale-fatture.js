@@ -4,6 +4,7 @@ import {
 } from "rxjs/Observable";
 
 const Logger = require('./config/winston.js');
+const moment = require('moment');
 
 const logger = new Logger('MG_FATTURE');
 
@@ -23,7 +24,7 @@ async function doInsertRecord(mongo, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
-    var datDoc = record.DATDOC;
+    var datDoc = moment(record.DATDOC, 'YYYYMMDD').toDate();
     var codCliente = record.CODCF;
     var totImp = record.TOTIMP;
     var totIVA = record.TOTIVA;

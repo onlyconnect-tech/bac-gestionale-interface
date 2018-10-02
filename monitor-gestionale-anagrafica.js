@@ -3,6 +3,7 @@ import {
     Observable
 } from "rxjs/Observable";
 
+const moment = require('moment');
 const Logger = require('./config/winston.js');
 
 const logger = new Logger('MG_ANAGRAFICA');
@@ -39,6 +40,8 @@ async function doInsertRecord(mongo, record) {
         ragSoc2: record.RAGSOC2,
         codiceFisc: record.CODFISC,
         pIva: record.PARTIVA,
+        dataIns: record.DATINS,
+        dataUMOD: record.DATUMOD,
         cap: record.CAP,
         localita: record.LOCAL,
         prov: record.PROV
@@ -72,6 +75,8 @@ async function doInsertRecord(mongo, record) {
         // if op === 'INSERTED' add to sync operations
         // if op === 'NONE' no need sync operations
 
+        
+
         var anagrafica = {
             _id: sequenceNumber,
             isDeleted: isDeleted,
@@ -80,6 +85,8 @@ async function doInsertRecord(mongo, record) {
             indSedeLeg: info.indSedeLeg,
             codiceFisc: info.codiceFisc,
             pIva: info.pIva,
+            dataIns: moment(info.dataIns, "YYYYMMDD").toDate(),
+            dataUMOD: moment(info.dataUMOD, "YYYYMMDD").toDate(),
             location: location
         };
 
