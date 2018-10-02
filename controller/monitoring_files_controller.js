@@ -33,7 +33,7 @@ class MonitoringFilesController {
 
         const controller = () => {
 
-            logger.debug('START CHECKING');
+            logger.debug('START CHECKING %s', fileName);
 
             logger.debug("CONTAINS FILE CHANGED: %s -> %O", fileName, this.filesToMonitor.get(fileName));
             logger.debug("STATUS CHECKING: %s -> %O", fileName, this.filesModificationStatus.get(fileName));
@@ -43,7 +43,7 @@ class MonitoringFilesController {
             if (statusFile == null) {
 
                 logger.debug('FIRST TIME');
-                logger.info("DOING SYNCR");
+                logger.info("DOING SYNCR %s", fileName);
                 // do work
                 var now = new Date();
                 this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
@@ -80,7 +80,7 @@ class MonitoringFilesController {
                 if (!statusFile.working &&
                     (this.filesToMonitor.get(fileName) ? this.filesToMonitor.get(fileName).getTime() > statusFile.timeCheck : false)) {
 
-                    logger.info("DOING SYNCR");
+                    logger.info("DOING SYNCR %s", fileName);
 
                     // do work
                     var now = new Date();
@@ -95,7 +95,7 @@ class MonitoringFilesController {
                         logger.debug("RESULT: %O", result);
 
                         if(result.status === 'OK') {
-                            logger.info('OK SYNCRONIZATION');
+                            logger.info('OK SYNCRONIZATION %s', fileName);
                             // if OK
                             var newStatus = this.filesModificationStatus.get(fileName);
                             newStatus.working = false;
@@ -108,7 +108,12 @@ class MonitoringFilesController {
 
                     });
                 } else {
-                    logger.debug("DO NOTHING");
+
+                    if(statusFile.working) {
+                        logger.debug("STILL WORKING SYNCRONIZATION");
+                    } else {
+                        logger.info("DO NOTHING - YET SYNCHRONIZED %s", fileName);
+                    }
                 }
             }
 

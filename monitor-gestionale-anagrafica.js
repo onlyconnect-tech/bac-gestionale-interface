@@ -190,11 +190,11 @@ class SynchronizerAnagrafica {
                 mongo.initDBConnection().then(() => {
 
                     parser.on('start', (p) => {
-                        logger.info('dBase file parsing has started');
+                        logger.info('dBase file %s parsing has started', this.fileName);
                     });
 
                     parser.on('header', (h) => { 
-                        logger.info('dBase file header has been parsed %j', h);
+                        logger.info('dBase file %s header has been parsed %j', this.fileName, h);
                     });
 
                     parser.on('record', (record) => {
@@ -204,7 +204,7 @@ class SynchronizerAnagrafica {
                     });
 
                     parser.on('end', (p) => {
-                        logger.info('Finished parsing the dBase file - numRow: %d', this.numRow);
+                        logger.info('Finished parsing the dBase file %s - numRow: %d', this.fileName, this.numRow);
                         observerG.complete();
                     });
 
