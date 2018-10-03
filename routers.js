@@ -145,7 +145,21 @@ const routes = [{
         return mongo.findAnagraficheBySequenceNumber(id);
         
         }
-    }, {  
+    }, {
+        method: 'GET',
+        path: '/get-anagrafica-by-codcli/{codcli}',
+        handler: async function (request, h) {
+            
+            const mongo = this.mongo;
+    
+            // find id-values
+    
+            var codcli = request.params.codcli;
+    
+            return mongo.findAnagraficheByCodCli(codcli);
+            
+            }
+        }, {  
         method: 'GET',
         path: '/add',
         handler: async (request, h) => {
@@ -169,28 +183,17 @@ const routes = [{
           handler: async function (request, h){
 
             const mongo = this.mongo;
+            var locations;
+            try {
+                locations = await mongo.findLocation().toArray();
+            } catch(err) {
+               console.log("", err);
+               Bounce.rethrow(err, 'system');
+            }
 
-            return mongo.findLocation().toArray();
+            return locations;
           }
       }, {
-        method: 'GET',
-        path: '/group-anagrafica-by-location',
-        handler: async function (request, h){
-
-          const mongo = this.mongo;
-
-          return mongo.groupAnagraficaByLocations();
-        }
-    }, {
-        method: 'GET',
-        path: '/find-orphan-location',
-        handler: async function (request, h){
-          
-          const mongo = this.mongo;
-
-          return mongo.findOrphanLocations();
-        }
-    }, {
         method: 'GET',
         path: '/get-anagrafica-by-location/{location}',
         handler: async function (request, h){
@@ -199,11 +202,65 @@ const routes = [{
           var locationName = request.params.location;
 
           console.log('GET BY LOCATION:', locationName);
+
+          var results;
+
+          try {
+            results = await mongo.getAnagraficaByLocation(locationName);
+          } catch(err) {
+            console.log("", err);
+            Bounce.rethrow(err, 'system');
+          }
           
-          return mongo.getAnagraficaByLocation(locationName);
+          return results;
+        }
+    }, {
+        method: 'GET',
+        path: '/fatture',
+        handler: async function (request, h) {
+            
+            const mongo = this.mongo;
+                    
+            var  res;
+            
+            try {
+                res = await mongo.findFatture();
+            
+            } catch (err) {
+                // res = "CUNARDO!!";
+                console.log("ERR:", err);
+                Bounce.rethrow(err, 'system');
+            }
+
+            console.log("res --->");
+    
+            return res;
+        }
+    }, {
+        method: 'GET',
+        path: '/fatture-by-codcli/{codCli}',
+        handler: async function (request, h) {
+            
+            const mongo = this.mongo;
+            
+            var codCli = request.params.codCli;
+            
+            var  res;
+            
+            try {
+                res = await mongo.findFattureByCodCli(codCli);
+            
+            } catch (err) {
+                // res = "CUNARDO!!";
+                console.log("ERR:", err);
+                Bounce.rethrow(err, 'system');
+            }
+
+            console.log("res --->");
+    
+            return res;
         }
     }
-
 ];
 
 
