@@ -8,9 +8,10 @@ const options = {
       level: 'info',
       filename: `${appRoot}/logs/app.log`,
       handleExceptions: true,
-      json: true,
+      // json: true,
       maxsize: 5242880, // 5MB
       maxFiles: 5,
+      tailable: true,
       colorize: false,
     },
     console: {

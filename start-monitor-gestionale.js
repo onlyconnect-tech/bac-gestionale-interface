@@ -17,6 +17,7 @@ exports.module = {
 // require("./monitor-gestionale-anagrafica.js");
 
 const Logger = require('./config/winston');
+const env = require('env2')('./env.json');
 
 const MonitoringFilesController = require('./controller/monitoring_files_controller');
 
@@ -26,11 +27,17 @@ const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
 const logger = new Logger("MONITOR_GESTIONALE");
 
 // Connection URL
-const urlManogoDb = 'mongodb://localhost:27017';
+const urlManogoDb = process.env.MONGO_URL;
 
 // Database Name
-// 'myproject'
-const dbName = 'myproject';
+const dbName = process.env.DB_NAME;
+
+const syncCheckFrequency = process.env.SYNC_FREQUENCY;
+
+logger.info("STARTING APP");
+logger.info("URL MONGODB: %s", urlManogoDb);
+logger.info("DB_NAME: %s", dbName);
+logger.info("SYNC CHECK FREQUENCY: %d", syncCheckFrequency);
 
 const fileNameFatture = './data/TABFST01.DBF';
 const fileNameAnagrafica = './data/ANACF.DBF';
@@ -38,22 +45,6 @@ const fileNameAnagrafica = './data/ANACF.DBF';
 const synchronizerFatture = new SynchronizerFatture(fileNameFatture, urlManogoDb, dbName);
 
 const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, urlManogoDb, dbName);
-
-/*
-
-synchronizerFatture.doWork().then((result) => {
-    console.log(result);
-});
-
-*/
-
-/*
-
-synchronizerAnagrafica.doWork().then((result) => {
-    console.log(result);
-});
-
-*/
 
 // format seconds in minutes and seconds part
 function formatSeconds(seconds) {
@@ -84,7 +75,7 @@ const syncrAnagrafica = async () => {
     } finally {
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark SYNC ANAG took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 }
@@ -107,24 +98,12 @@ const syncrFatture = async () => {
     } finally {
         const diff = process.hrtime(startSyncFatt);
         const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark SYNC INVOICE took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 }
 
-const init = async () => {
-
-   await syncrAnagrafica();
-
-   await syncrFatture();
-    
-}
-
-// init();
-
-const FREQUENCY = 60;
-
-const monitoringFilesController = new MonitoringFilesController(FREQUENCY);
+const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
 
 monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
 

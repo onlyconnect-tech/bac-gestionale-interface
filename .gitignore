@@ -3,4 +3,7 @@ node_modules
 
 docs
 
+env.json
+env_local.json
+env_cloud.json
 

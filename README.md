@@ -50,6 +50,11 @@ https://www.infoq.com/articles/Starting-With-MongoDB
 
 http://adampaxton.com/handling-multiple-javascript-promises-even-if-some-fail/
 
+### AZURE
+
+https://blogs.msdn.microsoft.com/bigdatasupport/2015/09/02/dealing-with-requestratetoolarge-errors-in-azure-documentdb-and-testing-performance/
+
+
 
 
 
