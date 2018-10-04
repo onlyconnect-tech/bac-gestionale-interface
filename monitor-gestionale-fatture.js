@@ -3,6 +3,7 @@ import {
     Observable
 } from "rxjs/Observable";
 
+const Promise = require('bluebird');
 const Logger = require('./config/winston.js');
 const moment = require('moment');
 
@@ -12,11 +13,27 @@ import Mongo from './lib/mongo';
 
 async function doProcessBlockRecords(mongo, recordsBlock) {
 
+    var current = Promise.resolve();
+
     return Promise.all(recordsBlock.map((record) => {
+
+        current = current.then(function() {
+            return doInsertRecord(mongo, record); // returns promise
+        }).then(function(result) { 
+            return result;
+        }, function(err) {
+            return Promise.reject(err);
+        });
+
+        return current;
+
+        /*
+
         return doInsertRecord(mongo, record).then((result) => {
             return result;
         });
-
+        
+        */
     }));
 }
 
@@ -56,7 +73,7 @@ async function doInsertRecord(mongo, record) {
         if (resultOp.op !== 'NONE')
             logger.info("SYNC FATTURA: %j", resultOp);
 
-        return resultOp;
+        return Promise.resolve(resultOp);
 
     } catch (err) {
 

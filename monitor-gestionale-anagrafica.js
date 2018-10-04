@@ -3,6 +3,7 @@ import {
     Observable
 } from "rxjs/Observable";
 
+const Promise = require('bluebird');
 const moment = require('moment');
 const Logger = require('./config/winston.js');
 
@@ -11,11 +12,26 @@ const logger = new Logger('MG_ANAGRAFICA');
 import Mongo from './lib/mongo';
 
 async function doProcessBlockRecords(mongo, recordsBlock) {
+    
+    var current = Promise.resolve();
 
     return Promise.all(recordsBlock.map((record) => {
+
+        current = current.then(function() {
+            return doInsertRecord(mongo, record); // returns promise
+        }).then(function(result) { 
+            return result;
+        }, function(err) {
+            return Promise.reject(err);
+        });
+
+        return current;
+        
+        /*
         return doInsertRecord(mongo, record).then((result) => {
             return result;
         });
+        */
 
     }));
 }
