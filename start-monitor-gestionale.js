@@ -107,6 +107,6 @@ const monitoringFilesController = new MonitoringFilesController(syncCheckFrequen
 
 monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
 
-monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
+// monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
 
 

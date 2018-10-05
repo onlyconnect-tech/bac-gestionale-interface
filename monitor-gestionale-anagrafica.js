@@ -20,8 +20,10 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
         current = current.then(function() {
             return doInsertRecord(mongo, record); // returns promise
         }).then(function(result) { 
+            logger.info(" RESULT BLOCKKK: %j", result);
             return result;
         }, function(err) {
+            logger.error(" RESULT BLOCKKK: %s", err);
             return Promise.reject(err);
         });
 
@@ -77,7 +79,7 @@ async function doInsertRecord(mongo, record) {
         };
     }
 
-    logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
+    logger.info('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
 
     // info.localita, info.cap, info.prov
     var location = {
@@ -108,7 +110,7 @@ async function doInsertRecord(mongo, record) {
 
         const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
 
-        if(restInsertAnagrafica.op !== 'NONE')
+        // if(restInsertAnagrafica.op !== 'NONE')
             logger.info("SYNC ANAG: %j", restInsertAnagrafica);
 
         // if op === 'INSERT' add to sync operations
@@ -131,11 +133,13 @@ class SynchronizerAnagrafica {
         this.fileName = fileName;
         this.urlManogoDb = urlManogoDb;
         this.dbName = dbName;
+
+        this.arrPromisesBlocksProcessing = [];
         this.numRow = 0;
     }
 
     doWork() {
-        this.numRow = 0; // reset 
+        
         return new Promise((resolve, reject) => {
                 const parser = new Parser(this.fileName);
 
@@ -159,14 +163,21 @@ class SynchronizerAnagrafica {
                         accumulatorRecords = [];
                         // call insert block
 
+                        var resultsP = doProcessBlockRecords(mongo, recordsBlock);
+
+                        this.arrPromisesBlocksProcessing.push(resultsP);
+                        /*
+
                         try {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
-                            logger.info("BLOCK ANAGRAFICHE PROCESSED");
+                            logger.info("*** BLOCK ANAGRAFICHE PROCESSED");
                         } catch (errs) {
                             numErrors ++;
                             // skip other processing
                             logger.error("ERROR: %s", errs.message);
                         }
+
+                        */
 
                     }
 
@@ -182,7 +193,45 @@ class SynchronizerAnagrafica {
                 }, async () => {
                     // done
 
+                    logger.info("PROCESSING LAST BLOCK!!!");
+
+                    var resultsP = doProcessBlockRecords(mongo, accumulatorRecords);
+
+                    this.arrPromisesBlocksProcessing.push(resultsP);
+
+                    Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
+
+                        console.info('LAST: %O', results);
+
+                        resolve({
+                            status: "OK",
+                            numRow: this.numRow
+                        });
+
+                    }, (err) => {
+
+                        return resolve({
+                            status: "ERROR",
+                            numRow: this.numRow,
+                            numErrors: numErrors
+                        }); 
+
+                    }).finally(()=> {
+
+                       logger.info('COMPLETE REACHED!!!');
+
+                       mongo.closeClient();
+
+                       this.numRow = 0;
+
+                       this.arrPromisesBlocksProcessing = [];
+                    })
+
+
                     // process last
+
+                    /*
+
                     try {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
                         logger.debug("BLOCK ANAGRAFICHE PROCESSED");
@@ -193,7 +242,7 @@ class SynchronizerAnagrafica {
                     } finally {
                         logger.info('COMPLETE REACHED!!!');
 
-                        mongo.closeClient();
+//                         mongo.closeClient();
 
                         if ( numErrors !== 0) {
                             return resolve({
@@ -208,6 +257,8 @@ class SynchronizerAnagrafica {
                             numRow: this.numRow
                         });
                     }
+
+                    */
                 });
 
                 mongo.initDBConnection().then(() => {
