@@ -11,6 +11,9 @@ const logger = new Logger('MG_ANAGRAFICA');
 
 import Mongo from './lib/mongo';
 
+const Cache = require('./lib/cache').Cache;
+const ValueStatus = require('./lib/cache').ValueStatus;
+
 async function doProcessBlockRecords(mongo, recordsBlock) {
     
     var current = Promise.resolve();
@@ -19,22 +22,13 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
 
         current = current.then(async function() {
             return await doInsertRecord(mongo, record); // returns promise
-        }).then(function(result) { 
-            logger.info(" RESULT BLOCKKK: %j", result);
-            return result;
-        }, function(err) {
-            logger.error("ERROR RESULT BLOCKKK: %s", err);
+        }).catch(function(err) {
+            logger.error("ERROR RESULT BLOCK: %s", err);
             return Promise.reject(err);
         });
 
         return current;
         
-        /*
-        return doInsertRecord(mongo, record).then((result) => {
-            return result;
-        });
-        */
-
     }));
 }
 
@@ -79,7 +73,7 @@ async function doInsertRecord(mongo, record) {
         };
     }
 
-    logger.info('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
+    logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
 
     // info.localita, info.cap, info.prov
     var location = {
@@ -111,7 +105,7 @@ async function doInsertRecord(mongo, record) {
         const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
 
         // if(restInsertAnagrafica.op !== 'NONE')
-            logger.info("SYNC ANAG: %j", restInsertAnagrafica);
+            logger.debug("SYNC ANAG: %j", restInsertAnagrafica);
 
         // if op === 'INSERT' add to sync operations
         // if op === 'UPDATE' add to sync operations
@@ -120,6 +114,7 @@ async function doInsertRecord(mongo, record) {
         return restInsertAnagrafica;
 
     } catch (err) {
+        logger.error(err);
         logger.error("ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d",  err.message, record['@sequenceNumber']);
         throw err;
     }
@@ -133,6 +128,8 @@ class SynchronizerAnagrafica {
         this.fileName = fileName;
         this.urlManogoDb = urlManogoDb;
         this.dbName = dbName;
+
+        this.cache = new Cache('./cache_db/gestionale-db');
 
         this.arrPromisesBlocksProcessing = [];
         this.numRow = 0;
@@ -156,7 +153,9 @@ class SynchronizerAnagrafica {
 
                 observable.subscribe(async (record) => {
                     const splitLength = 500;
+
                     accumulatorRecords.push(record);
+
                     if (accumulatorRecords.length == splitLength) {
                         const recordsBlock = accumulatorRecords;
 
@@ -166,19 +165,6 @@ class SynchronizerAnagrafica {
                         var resultsP = doProcessBlockRecords(mongo, recordsBlock);
 
                         this.arrPromisesBlocksProcessing.push(resultsP);
-
-                        /*
-
-                        try {
-                            var results = await doProcessBlockRecords(mongo, recordsBlock);
-                            logger.info("*** BLOCK ANAGRAFICHE PROCESSED");
-                        } catch (errs) {
-                            numErrors ++;
-                            // skip other processing
-                            logger.error("ERROR: %s", errs.message);
-                        }
-
-                        */
 
                     }
 
@@ -229,39 +215,7 @@ class SynchronizerAnagrafica {
 
                        this.arrPromisesBlocksProcessing = [];
                     });
-
-
-                    // process last
-
-                    /*
-
-                    try {
-                        var results = await doProcessBlockRecords(mongo, accumulatorRecords);
-                        logger.debug("BLOCK ANAGRAFICHE PROCESSED");
-                    } catch (errs) {
-                        numErrors++;
-
-                        logger.error("ERROR: %s", errs.message);
-                    } finally {
-                        logger.info('COMPLETE REACHED!!!');
-
-//                         mongo.closeClient();
-
-                        if ( numErrors !== 0) {
-                            return resolve({
-                                status: "ERROR",
-                                numRow: this.numRow,
-                                numErrors: numErrors
-                            }); 
-                        } 
-
-                        resolve({
-                            status: "OK",
-                            numRow: this.numRow
-                        });
-                    }
-
-                    */
+                   
                 });
 
                 mongo.initDBConnection().then(() => {

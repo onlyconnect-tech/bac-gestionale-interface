@@ -19,21 +19,13 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
 
         current = current.then(async function() {
             return await doInsertRecord(mongo, record); // returns promise
-        }).then(function(result) { 
-            return result;
-        }, function(err) {
+        }).catch(function(err) {
+            logger.error("ERROR RESULT BLOCK: %s", err);
             return Promise.reject(err);
         });
 
         return current;
 
-        /*
-
-        return doInsertRecord(mongo, record).then((result) => {
-            return result;
-        });
-        
-        */
     }));
 }
 
@@ -71,7 +63,7 @@ async function doInsertRecord(mongo, record) {
         const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
         // if (resultOp.op !== 'NONE')
-            logger.info("SYNC FATTURA: %j", resultOp);
+            logger.debug("SYNC FATTURA: %j", resultOp);
 
         return resultOp;
 

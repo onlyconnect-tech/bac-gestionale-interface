@@ -47,7 +47,6 @@ const SynchronizerFatture = require("./monitor-gestionale-fatture");
 const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
 
 
-
 // Connection URL
 const urlManogoDb = process.env.MONGO_URL;
 
