@@ -1,6 +1,7 @@
 // Set options as a parameter, environment variable, or rc file.
 require = require("esm")(module/*, options*/);
 
+
 // module.exports = [require("./monitor-gestionale-anagrafica.js"), require("./monitor-gestionale-fatture.js")]
 
 // module.exports = require("./monitor-gestionale-fatture.js")
@@ -15,16 +16,37 @@ exports.module = {
 */
 
 // require("./monitor-gestionale-anagrafica.js");
-
+const DEFAULT_CONF_FILE = './env.json';
 const Logger = require('./config/winston');
-const env = require('env2')('./env.json');
+
+const argv = require('yargs')
+    .usage('Usage: $0 option config_file \n e.g $0 -c config_file')
+    .alias('c', 'config')
+    .nargs('c', 1)
+    .describe('c', 'Config file')
+    // .demandOption(['c'])
+    .help('h')
+    .alias('h', 'help')
+    .epilog('Copyright OnlyConnect 2018')
+    .argv
+
+var confFile = DEFAULT_CONF_FILE;
+if (argv.c) {
+    confFile = argv.c;
+}
+
+const logger = new Logger("MONITOR_GESTIONALE");
+
+logger.info("STARTING APPLICATION - CONF_FILE: %s", confFile);
+
+const env = require('env2')(confFile);
 
 const MonitoringFilesController = require('./controller/monitoring_files_controller');
 
 const SynchronizerFatture = require("./monitor-gestionale-fatture");
 const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
 
-const logger = new Logger("MONITOR_GESTIONALE");
+
 
 // Connection URL
 const urlManogoDb = process.env.MONGO_URL;
@@ -107,6 +129,6 @@ const monitoringFilesController = new MonitoringFilesController(syncCheckFrequen
 
 monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
 
-// monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
+monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
 
 

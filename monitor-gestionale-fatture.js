@@ -17,8 +17,8 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
 
     return Promise.all(recordsBlock.map((record) => {
 
-        current = current.then(function() {
-            return doInsertRecord(mongo, record); // returns promise
+        current = current.then(async function() {
+            return await doInsertRecord(mongo, record); // returns promise
         }).then(function(result) { 
             return result;
         }, function(err) {
@@ -70,13 +70,13 @@ async function doInsertRecord(mongo, record) {
 
         const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
-        if (resultOp.op !== 'NONE')
+        // if (resultOp.op !== 'NONE')
             logger.info("SYNC FATTURA: %j", resultOp);
 
-        return Promise.resolve(resultOp);
+        return resultOp;
 
     } catch (err) {
-
+        logger.error(err);
         logger.error("ERROR INSERT FATTURA: %s - SEQUENCE NUMBER: %d", err.message, record['@sequenceNumber']);
         throw err;
 
@@ -90,11 +90,13 @@ class SynchronizerFatture {
         this.fileName = fileName;
         this.urlManogoDb = urlManogoDb;
         this.dbName = dbName;
+
+        this.arrPromisesBlocksProcessing = [];
         this.numRow = 0;
     }
 
     doWork() {
-        this.numRow = 0; // reset
+        
         return new Promise((resolve, reject) => {
             const parser = new Parser(this.fileName);
             const mongo = new Mongo(this.urlManogoDb, this.dbName);
@@ -109,13 +111,19 @@ class SynchronizerFatture {
             });
 
             observable.subscribe(async (record) => {
-                    const splitLength = 500;
+                    const splitLength = 5000;
                     accumulatorRecords.push(record);
                     if (accumulatorRecords.length == splitLength) {
                         const recordsBlock = accumulatorRecords;
 
                         accumulatorRecords = [];
                         // call insert block
+
+                        var resultsP = doProcessBlockRecords(mongo, recordsBlock);
+
+                        this.arrPromisesBlocksProcessing.push(resultsP);
+
+                        /*
 
                         try {
                             var results = await doProcessBlockRecords(mongo, recordsBlock);
@@ -125,6 +133,8 @@ class SynchronizerFatture {
 
                             logger.error("ERROR: %s", errs.message);
                         }
+
+                        */
 
                     }
 
@@ -138,6 +148,45 @@ class SynchronizerFatture {
                     // done
 
                     // process last
+
+                    logger.info("PROCESSING LAST BLOCK!!!");
+
+                    var resultsP = doProcessBlockRecords(mongo, accumulatorRecords);
+
+                    this.arrPromisesBlocksProcessing.push(resultsP);
+
+                    Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
+
+                        logger.info('LAST: %O', results);
+
+                        resolve({
+                            status: "OK",
+                            numRow: this.numRow
+                        });
+
+                    }, (err) => {
+                        
+                        logger.error("LAST: %s", err);
+
+                        return resolve({
+                            status: "ERROR",
+                            numRow: this.numRow,
+                            numErrors: numErrors
+                        }); 
+
+                    }).finally(()=> {
+
+                       logger.info('COMPLETE REACHED - IN FINALLY!!!');
+
+                       mongo.closeClient();
+
+                       this.numRow = 0;
+
+                       this.arrPromisesBlocksProcessing = [];
+                    });
+
+                    /*
+                    
                     try {
                         var results = await doProcessBlockRecords(mongo, accumulatorRecords);
                         logger.info("BLOCK FATTURE PROCESSED");
@@ -164,6 +213,7 @@ class SynchronizerFatture {
                         });
                     }
 
+                    */
 
                 });
 

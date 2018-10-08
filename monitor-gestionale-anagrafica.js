@@ -17,13 +17,13 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
 
     return Promise.all(recordsBlock.map((record) => {
 
-        current = current.then(function() {
-            return doInsertRecord(mongo, record); // returns promise
+        current = current.then(async function() {
+            return await doInsertRecord(mongo, record); // returns promise
         }).then(function(result) { 
             logger.info(" RESULT BLOCKKK: %j", result);
             return result;
         }, function(err) {
-            logger.error(" RESULT BLOCKKK: %s", err);
+            logger.error("ERROR RESULT BLOCKKK: %s", err);
             return Promise.reject(err);
         });
 
@@ -166,6 +166,7 @@ class SynchronizerAnagrafica {
                         var resultsP = doProcessBlockRecords(mongo, recordsBlock);
 
                         this.arrPromisesBlocksProcessing.push(resultsP);
+
                         /*
 
                         try {
@@ -201,7 +202,7 @@ class SynchronizerAnagrafica {
 
                     Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
 
-                        console.info('LAST: %O', results);
+                        logger.info('LAST: %O', results);
 
                         resolve({
                             status: "OK",
@@ -209,6 +210,8 @@ class SynchronizerAnagrafica {
                         });
 
                     }, (err) => {
+                        
+                        logger.error("LAST: %s", err);
 
                         return resolve({
                             status: "ERROR",
@@ -218,14 +221,14 @@ class SynchronizerAnagrafica {
 
                     }).finally(()=> {
 
-                       logger.info('COMPLETE REACHED!!!');
+                       logger.info('COMPLETE REACHED - IN FINALLY!!!');
 
                        mongo.closeClient();
 
                        this.numRow = 0;
 
                        this.arrPromisesBlocksProcessing = [];
-                    })
+                    });
 
 
                     // process last
