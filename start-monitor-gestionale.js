@@ -61,14 +61,15 @@ logger.info("URL MONGODB: %s", urlManogoDb);
 logger.info("DB_NAME: %s", dbName);
 logger.info("SYNC CHECK FREQUENCY: %d", syncCheckFrequency);
 
-const fileNameFatture = './data/TABFST01.DBF';
 const fileNameAnagrafica = './data/ANACF.DBF';
+const fileNameFatture = './data/TABFST01.DBF';
+const fileNameFatturePlus = './data/TABFST02.DBF';
 
 const cache = new Cache('./cache_db/gestionale-db');
 
-const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlManogoDb, dbName);
-
 const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName);
+
+const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlManogoDb, dbName);
 
 // format seconds in minutes and seconds part
 function formatSeconds(seconds) {
@@ -123,6 +124,29 @@ const syncrFatture = async () => {
         const diff = process.hrtime(startSyncFatt);
         const fDiff = formatSeconds(diff[0]);
         logger.info(`Benchmark SYNC INVOICE took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+    }
+
+}
+
+const syncrFatturePlus = async () => {
+
+    const startSyncFatt = process.hrtime();
+
+    try {
+        const resFatt = await synchronizerFatturePlus.doWork();
+        // console.log(resFatt);
+        return resFatt;
+    } catch (err) {
+        logger.error(err);
+        return {
+            status: "ERROR",
+            numRow: -1,
+            numErrors: -1
+        };
+    } finally {
+        const diff = process.hrtime(startSyncFatt);
+        const fDiff = formatSeconds(diff[0]);
+        logger.info(`Benchmark SYNC INVOICE PLUS took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 }
