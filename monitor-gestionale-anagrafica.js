@@ -12,7 +12,6 @@ const logger = new Logger('MG_ANAGRAFICA');
 
 import Mongo from './lib/mongo';
 
-const Cache = require('./lib/cache').Cache;
 const ValueStatus = require('./lib/cache').ValueStatus;
 
 async function doProcessBlockRecords(cache, mongo, recordsBlock) {
@@ -139,8 +138,9 @@ async function doInsertRecord(cache, mongo, record) {
 
 class SynchronizerAnagrafica {
 
-    constructor(fileName, urlManogoDb, dbName) {
+    constructor(fileName, cache, urlManogoDb, dbName) {
         this.fileName = fileName;
+        this.cache = cache;
         this.urlManogoDb = urlManogoDb;
         this.dbName = dbName;
 
@@ -153,7 +153,6 @@ class SynchronizerAnagrafica {
         return new Promise((resolve, reject) => {
                 const parser = new Parser(this.fileName);
                 const mongo = new Mongo(this.urlManogoDb, this.dbName);
-                const cache = new Cache('./cache_db/gestionale-db');
 
                 var observerG;
 
@@ -175,7 +174,7 @@ class SynchronizerAnagrafica {
                         accumulatorRecords = [];
                         // call insert block
 
-                        var resultsP = doProcessBlockRecords(cache, mongo, recordsBlock);
+                        var resultsP = doProcessBlockRecords(this.cache, mongo, recordsBlock);
 
                         this.arrPromisesBlocksProcessing.push(resultsP);
 
@@ -195,7 +194,7 @@ class SynchronizerAnagrafica {
 
                     logger.info("PROCESSING LAST BLOCK!!!");
 
-                    var resultsP = doProcessBlockRecords(cache, mongo, accumulatorRecords);
+                    var resultsP = doProcessBlockRecords(this.cache, mongo, accumulatorRecords);
 
                     this.arrPromisesBlocksProcessing.push(resultsP);
 

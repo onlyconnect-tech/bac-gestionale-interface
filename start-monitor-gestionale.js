@@ -45,6 +45,7 @@ const MonitoringFilesController = require('./controller/monitoring_files_control
 
 const SynchronizerFatture = require("./monitor-gestionale-fatture");
 const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
+const Cache = require('./lib/cache').Cache;
 
 
 // Connection URL
@@ -63,9 +64,11 @@ logger.info("SYNC CHECK FREQUENCY: %d", syncCheckFrequency);
 const fileNameFatture = './data/TABFST01.DBF';
 const fileNameAnagrafica = './data/ANACF.DBF';
 
-const synchronizerFatture = new SynchronizerFatture(fileNameFatture, urlManogoDb, dbName);
+const cache = new Cache('./cache_db/gestionale-db');
 
-const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, urlManogoDb, dbName);
+const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlManogoDb, dbName);
+
+const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName);
 
 // format seconds in minutes and seconds part
 function formatSeconds(seconds) {
