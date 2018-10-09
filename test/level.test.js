@@ -12,18 +12,18 @@ const test1 = async ()=> {
         
         var valueNO = null;
         
-        valueNO = await cache.getAnagraficaHash(1000, "PLUTO");
+        valueNO = await cache.checkAnagraficaHash(1000, "PLUTO");
         
         assert(valueNO === ValueStatus.NOVALUE);
         // console.log(valueNO);
 
         await cache.setAnagraficaHash(1, 'pippo');
 
-        var value = await cache.getAnagraficaHash(1, 'pippo');
+        var value = await cache.checkAnagraficaHash(1, 'pippo');
         
         assert(value === ValueStatus.SAME);
 
-        value = await cache.getAnagraficaHash(1, 'pippoN');
+        value = await cache.checkAnagraficaHash(1, 'pippoN');
 
         assert(value === ValueStatus.MODIFIED);
 

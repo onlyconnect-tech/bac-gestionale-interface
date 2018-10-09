@@ -4,21 +4,25 @@ import {
 } from "rxjs/Observable";
 
 const Promise = require('bluebird');
-const Logger = require('./config/winston.js');
 const moment = require('moment');
+const hash = require('object-hash');
+const Logger = require('./config/winston.js');
 
 const logger = new Logger('MG_FATTURE');
 
 import Mongo from './lib/mongo';
 
-async function doProcessBlockRecords(mongo, recordsBlock) {
+const Cache = require('./lib/cache').Cache;
+const ValueStatus = require('./lib/cache').ValueStatus;
+
+async function doProcessBlockRecords(cache, mongo, recordsBlock) {
 
     var current = Promise.resolve();
 
     return Promise.all(recordsBlock.map((record) => {
 
         current = current.then(async function() {
-            return await doInsertRecord(mongo, record); // returns promise
+            return await doInsertRecord(cache, mongo, record); // returns promise
         }).catch(function(err) {
             logger.error("ERROR RESULT BLOCK: %s", err);
             return Promise.reject(err);
@@ -29,7 +33,7 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
     }));
 }
 
-async function doInsertRecord(mongo, record) {
+async function doInsertRecord(cache, mongo, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
@@ -41,29 +45,41 @@ async function doInsertRecord(mongo, record) {
     var rtimpNON = record.RTIMPNON;
     var isDeleted = record['@deleted'];
 
-    var fattura = {
-        _id: seqNumberGest,
-        idFattura: idFattura,
-        annDoc: annDoc,
-        datDoc: datDoc,
-        codCliente: codCliente,
-        totImp: totImp,
-        totIVA: totIVA,
-        totRit: totRit,
-        rtimpNON: rtimpNON,
-        isDeleted: isDeleted
-    };
-
-
-    logger.debug("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
-
-    
     try {
 
+        var fattura = {
+            _id: seqNumberGest,
+            idFattura: idFattura,
+            annDoc: annDoc,
+            datDoc: datDoc,
+            codCliente: codCliente,
+            totImp: totImp,
+            totIVA: totIVA,
+            totRit: totRit,
+            rtimpNON: rtimpNON,
+            isDeleted: isDeleted
+        };
+
+        var hashValue = hash(fattura);
+        fattura.hash = hashValue;
+
+        var cacheStatus = await cache.checkInvoiceHash(fattura._id, fattura.hash);
+
+        if(cacheStatus === ValueStatus.SAME) {
+            return {
+                op: 'NONE',
+                seqNumber: fattura._id
+            };
+        }
+
+        logger.debug("----> CHECKING FATTURA seqNumber: %d", seqNumberGest);
+ 
         const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
         // if (resultOp.op !== 'NONE')
             logger.debug("SYNC FATTURA: %j", resultOp);
+        
+        await cache.setInvoiceHash(fattura._id, fattura.hash);
 
         return resultOp;
 
@@ -92,6 +108,7 @@ class SynchronizerFatture {
         return new Promise((resolve, reject) => {
             const parser = new Parser(this.fileName);
             const mongo = new Mongo(this.urlManogoDb, this.dbName);
+            const cache = new Cache('./cache_db/gestionale-db');
 
             var observerG;
 
@@ -111,22 +128,9 @@ class SynchronizerFatture {
                         accumulatorRecords = [];
                         // call insert block
 
-                        var resultsP = doProcessBlockRecords(mongo, recordsBlock);
+                        var resultsP = doProcessBlockRecords(cache, mongo, recordsBlock);
 
                         this.arrPromisesBlocksProcessing.push(resultsP);
-
-                        /*
-
-                        try {
-                            var results = await doProcessBlockRecords(mongo, recordsBlock);
-                            logger.debug("BLOCK FATTURE PROCESSED");
-                        } catch (errs) {
-                            numErrors++;
-
-                            logger.error("ERROR: %s", errs.message);
-                        }
-
-                        */
 
                     }
 
@@ -143,7 +147,7 @@ class SynchronizerFatture {
 
                     logger.info("PROCESSING LAST BLOCK!!!");
 
-                    var resultsP = doProcessBlockRecords(mongo, accumulatorRecords);
+                    var resultsP = doProcessBlockRecords(cache, mongo, accumulatorRecords);
 
                     this.arrPromisesBlocksProcessing.push(resultsP);
 
@@ -177,35 +181,6 @@ class SynchronizerFatture {
                        this.arrPromisesBlocksProcessing = [];
                     });
 
-                    /*
-                    
-                    try {
-                        var results = await doProcessBlockRecords(mongo, accumulatorRecords);
-                        logger.info("BLOCK FATTURE PROCESSED");
-                    } catch (errs) {
-                        numErrors++;
-
-                        logger.error("ERROR: %s", errs.message);
-                    } finally {
-                        logger.info('COMPLETE REACHED!!!');
-
-                        mongo.closeClient();
-
-                        if (numErrors !== 0) {
-                            return resolve({
-                                status: "ERROR",
-                                numRow: this.numRow,
-                                numErrors: numErrors
-                            });
-                        }
-
-                        resolve({
-                            status: "OK",
-                            numRow: this.numRow
-                        });
-                    }
-
-                    */
 
                 });
 

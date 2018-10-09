@@ -5,6 +5,7 @@ import {
 
 const Promise = require('bluebird');
 const moment = require('moment');
+const hash = require('object-hash');
 const Logger = require('./config/winston.js');
 
 const logger = new Logger('MG_ANAGRAFICA');
@@ -14,14 +15,14 @@ import Mongo from './lib/mongo';
 const Cache = require('./lib/cache').Cache;
 const ValueStatus = require('./lib/cache').ValueStatus;
 
-async function doProcessBlockRecords(mongo, recordsBlock) {
+async function doProcessBlockRecords(cache, mongo, recordsBlock) {
     
     var current = Promise.resolve();
 
     return Promise.all(recordsBlock.map((record) => {
 
         current = current.then(async function() {
-            return await doInsertRecord(mongo, record); // returns promise
+            return await doInsertRecord(cache, mongo, record); // returns promise
         }).catch(function(err) {
             logger.error("ERROR RESULT BLOCK: %s", err);
             return Promise.reject(err);
@@ -32,7 +33,7 @@ async function doProcessBlockRecords(mongo, recordsBlock) {
     }));
 }
 
-async function doInsertRecord(mongo, record) {
+async function doInsertRecord(cache, mongo, record) {
 
     var isDeleted = record['@deleted'];
     var sequenceNumber = record['@sequenceNumber'];
@@ -73,8 +74,6 @@ async function doInsertRecord(mongo, record) {
         };
     }
 
-    logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
-
     // info.localita, info.cap, info.prov
     var location = {
         localita: info.localita,
@@ -102,6 +101,20 @@ async function doInsertRecord(mongo, record) {
             location: location
         };
 
+        var hashValue = hash(anagrafica);
+        anagrafica.hash = hashValue;
+
+        var cacheStatus = await cache.checkAnagraficaHash(anagrafica._id, anagrafica.hash);
+
+        if(cacheStatus === ValueStatus.SAME) {
+            return {
+                op: 'NONE',
+                anagraficaId: anagrafica._id
+            };
+        }
+
+        logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
+
         const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
 
         // if(restInsertAnagrafica.op !== 'NONE')
@@ -110,6 +123,8 @@ async function doInsertRecord(mongo, record) {
         // if op === 'INSERT' add to sync operations
         // if op === 'UPDATE' add to sync operations
         // if op === 'NONE' no need sync operations
+
+        await cache.setAnagraficaHash(anagrafica._id, anagrafica.hash);
 
         return restInsertAnagrafica;
 
@@ -129,8 +144,6 @@ class SynchronizerAnagrafica {
         this.urlManogoDb = urlManogoDb;
         this.dbName = dbName;
 
-        this.cache = new Cache('./cache_db/gestionale-db');
-
         this.arrPromisesBlocksProcessing = [];
         this.numRow = 0;
     }
@@ -139,8 +152,8 @@ class SynchronizerAnagrafica {
         
         return new Promise((resolve, reject) => {
                 const parser = new Parser(this.fileName);
-
                 const mongo = new Mongo(this.urlManogoDb, this.dbName);
+                const cache = new Cache('./cache_db/gestionale-db');
 
                 var observerG;
 
@@ -162,7 +175,7 @@ class SynchronizerAnagrafica {
                         accumulatorRecords = [];
                         // call insert block
 
-                        var resultsP = doProcessBlockRecords(mongo, recordsBlock);
+                        var resultsP = doProcessBlockRecords(cache, mongo, recordsBlock);
 
                         this.arrPromisesBlocksProcessing.push(resultsP);
 
@@ -182,7 +195,7 @@ class SynchronizerAnagrafica {
 
                     logger.info("PROCESSING LAST BLOCK!!!");
 
-                    var resultsP = doProcessBlockRecords(mongo, accumulatorRecords);
+                    var resultsP = doProcessBlockRecords(cache, mongo, accumulatorRecords);
 
                     this.arrPromisesBlocksProcessing.push(resultsP);
 
