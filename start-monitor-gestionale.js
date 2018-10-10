@@ -74,91 +74,25 @@ const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlM
 
 const synchronizerFatturePart = new SynchronizerFatturePart(fileNameFatturePart, cache, urlManogoDb, dbName);
 
-// format seconds in minutes and seconds part
-function formatSeconds(seconds) {
-    
-    const minutes = Math.floor(seconds / 60);
-
-    const rest = seconds % 60;
-
-    return [minutes, rest];
-
-}
-
-const syncrAnagrafica = async () => {
-
-    const startSyncAnag = process.hrtime();
-
-    try {
-        const resAnag = await synchronizerAnagrafica.doWork();
-        // console.log(resAnag);
-        return resAnag;
-    } catch (err) {
-        logger.error('*** %s', err.message);
-        return {
-            status: 'ERROR',
-            numRow: -1,
-            numErrors: -1
-        };
-    } finally {
-        const diff = process.hrtime(startSyncAnag);
-        const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark SYNC ANAG took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
-    }
-
-};
-
-const syncrFatture = async () => {
-
-    const startSyncFatt = process.hrtime();
-
-    try {
-        const resFatt = await synchronizerFatture.doWork();
-        // console.log(resFatt);
-        return resFatt;
-    } catch (err) {
-        logger.error(err);
-        return {
-            status: 'ERROR',
-            numRow: -1,
-            numErrors: -1
-        };
-    } finally {
-        const diff = process.hrtime(startSyncFatt);
-        const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark SYNC INVOICE took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
-    }
-
-};
-
-const syncrFatturePart = async () => {
-
-    const startSyncFatt = process.hrtime();
-
-    try {
-        const resFatt = await synchronizerFatturePart.doWork();
-        // console.log(resFatt);
-        return resFatt;
-    } catch (err) {
-        logger.error(err);
-        return {
-            status: 'ERROR',
-            numRow: -1,
-            numErrors: -1
-        };
-    } finally {
-        const diff = process.hrtime(startSyncFatt);
-        const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark SYNC INVOICE PART took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
-    }
-
-};
 
 const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
 
-monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
+monitoringFilesController.registerControll(synchronizerAnagrafica);
+monitoringFilesController.registerControll(synchronizerFatture);
+monitoringFilesController.registerControll(synchronizerFatturePart);
 
-monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
+process.on('SIGINT', async function() {
+    logger.info('***** Caught interrupt signal *****');
 
-monitoringFilesController.registerControll(fileNameFatturePart, syncrFatturePart);
-
+    // stop registered processing TODO
+    await monitoringFilesController.doStopControll();
+    
+    try {
+        await cache.close();
+    } catch(err) {
+        logger.error(' %s', err.message);
+    } finally {
+        process.exit();
+    }
+    
+});

@@ -6,6 +6,40 @@ const Logger = require('../config/winston.js');
 
 const logger = new Logger('MONITORING_FILES_CONTROLLER');
 
+// format seconds in minutes and seconds part
+function formatSeconds(seconds) {
+    
+    const minutes = Math.floor(seconds / 60);
+
+    const rest = seconds % 60;
+
+    return [minutes, rest];
+
+}
+
+const syncrProcedure = async (synchronizerWorker) => {
+
+    const startSyncAnag = process.hrtime();
+
+    try {
+        const resAnag = await synchronizerWorker.doWork();
+        // console.log(resAnag);
+        return resAnag;
+    } catch (err) {
+        logger.error('*** %s', err.message);
+        return {
+            status: 'ERROR',
+            numRow: -1,
+            numErrors: -1
+        };
+    } finally {
+        const diff = process.hrtime(startSyncAnag);
+        const fDiff = formatSeconds(diff[0]);
+        logger.info(`Benchmark SYNC ANAG took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+    }
+
+};
+
 class StatusCheck {
 
     constructor(working, timeCheck) {
@@ -29,7 +63,12 @@ class MonitoringFilesController {
         this.filesModificationStatus = new Map();
     }
 
-    async registerControll(fileName, cb) {
+    async registerControll(synchronizerWorker) {
+
+        const fileName = synchronizerWorker.fileName;
+        const cb = () => {
+            return syncrProcedure(synchronizerWorker);
+        };
 
         const controller = () => {
 
@@ -141,13 +180,14 @@ class MonitoringFilesController {
 
     }
 
+    async doStopControll() {
+        // stoppare i timer
+
+        // stoppare i workers
 
 
-    doStartControll() {
-
-    }
-
-    doStopControll() {
+        logger.info('STOP CONTROLL TODO');
+        return Promise.resolve(1); 
 
     }
 
