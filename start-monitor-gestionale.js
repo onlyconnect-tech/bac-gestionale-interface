@@ -18,6 +18,7 @@ exports.module = {
 // require("./monitor-gestionale-anagrafica.js");
 const DEFAULT_CONF_FILE = './env.json';
 const Logger = require('./config/winston');
+const path = require('path');
 
 const argv = require('yargs')
     .usage('Usage: $0 option config_file \n e.g $0 -c config_file')
@@ -57,14 +58,17 @@ const dbName = process.env.DB_NAME;
 
 const syncCheckFrequency = process.env.SYNC_FREQUENCY;
 
+const dbfDirOath = process.env.DBF_DIR_PATH || './data';
+
 logger.info('STARTING APP');
 logger.info('URL MONGODB: %s', urlManogoDb);
 logger.info('DB_NAME: %s', dbName);
 logger.info('SYNC CHECK FREQUENCY: %d', syncCheckFrequency);
+logger.info('DBF_DIR_PATH: %s', dbfDirOath);
 
-const fileNameAnagrafica = './data/ANACF.DBF';
-const fileNameFatture = './data/TABFST01.DBF';
-const fileNameFatturePart = './data/TABFST02.DBF';
+const fileNameAnagrafica = path.join(dbfDirOath, 'ANACF.DBF');
+const fileNameFatture = path.join(dbfDirOath, 'TABFST01.DBF');
+const fileNameFatturePart = path.join(dbfDirOath, 'TABFST02.DBF');
 
 const cache = new Cache('./cache_db/gestionale-db');
 
