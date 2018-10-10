@@ -1,5 +1,5 @@
 // Set options as a parameter, environment variable, or rc file.
-require = require("esm")(module/*, options*/);
+require = require('esm')(module/*, options*/);
 
 
 // module.exports = [require("./monitor-gestionale-anagrafica.js"), require("./monitor-gestionale-fatture.js")]
@@ -28,23 +28,24 @@ const argv = require('yargs')
     .help('h')
     .alias('h', 'help')
     .epilog('Copyright OnlyConnect 2018')
-    .argv
+    .argv;
 
 var confFile = DEFAULT_CONF_FILE;
 if (argv.c) {
     confFile = argv.c;
 }
 
-const logger = new Logger("MONITOR_GESTIONALE");
+const logger = new Logger('MONITOR_GESTIONALE');
 
-logger.info("STARTING APPLICATION - CONF_FILE: %s", confFile);
+logger.info('STARTING APPLICATION - CONF_FILE: %s', confFile);
 
 const env = require('env2')(confFile);
 
 const MonitoringFilesController = require('./controller/monitoring_files_controller');
 
-const SynchronizerFatture = require("./monitor-gestionale-fatture");
-const SynchronizerAnagrafica = require("./monitor-gestionale-anagrafica");
+const SynchronizerAnagrafica = require('./monitor-gestionale-anagrafica');
+const SynchronizerFatture = require('./monitor-gestionale-fatture');
+const SynchronizerFatturePart = require('./monitor-gestionale-fatture-part');
 const Cache = require('./lib/cache').Cache;
 
 
@@ -56,20 +57,22 @@ const dbName = process.env.DB_NAME;
 
 const syncCheckFrequency = process.env.SYNC_FREQUENCY;
 
-logger.info("STARTING APP");
-logger.info("URL MONGODB: %s", urlManogoDb);
-logger.info("DB_NAME: %s", dbName);
-logger.info("SYNC CHECK FREQUENCY: %d", syncCheckFrequency);
+logger.info('STARTING APP');
+logger.info('URL MONGODB: %s', urlManogoDb);
+logger.info('DB_NAME: %s', dbName);
+logger.info('SYNC CHECK FREQUENCY: %d', syncCheckFrequency);
 
 const fileNameAnagrafica = './data/ANACF.DBF';
 const fileNameFatture = './data/TABFST01.DBF';
-const fileNameFatturePlus = './data/TABFST02.DBF';
+const fileNameFatturePart = './data/TABFST02.DBF';
 
 const cache = new Cache('./cache_db/gestionale-db');
 
 const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName);
 
 const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlManogoDb, dbName);
+
+const synchronizerFatturePart = new SynchronizerFatturePart(fileNameFatturePart, cache, urlManogoDb, dbName);
 
 // format seconds in minutes and seconds part
 function formatSeconds(seconds) {
@@ -91,9 +94,9 @@ const syncrAnagrafica = async () => {
         // console.log(resAnag);
         return resAnag;
     } catch (err) {
-        logger.error("*** %s", err.message);
+        logger.error('*** %s', err.message);
         return {
-            status: "ERROR",
+            status: 'ERROR',
             numRow: -1,
             numErrors: -1
         };
@@ -103,7 +106,7 @@ const syncrAnagrafica = async () => {
         logger.info(`Benchmark SYNC ANAG took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
-}
+};
 
 const syncrFatture = async () => {
 
@@ -116,7 +119,7 @@ const syncrFatture = async () => {
     } catch (err) {
         logger.error(err);
         return {
-            status: "ERROR",
+            status: 'ERROR',
             numRow: -1,
             numErrors: -1
         };
@@ -126,30 +129,30 @@ const syncrFatture = async () => {
         logger.info(`Benchmark SYNC INVOICE took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
-}
+};
 
-const syncrFatturePlus = async () => {
+const syncrFatturePart = async () => {
 
     const startSyncFatt = process.hrtime();
 
     try {
-        const resFatt = await synchronizerFatturePlus.doWork();
+        const resFatt = await synchronizerFatturePart.doWork();
         // console.log(resFatt);
         return resFatt;
     } catch (err) {
         logger.error(err);
         return {
-            status: "ERROR",
+            status: 'ERROR',
             numRow: -1,
             numErrors: -1
         };
     } finally {
         const diff = process.hrtime(startSyncFatt);
         const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark SYNC INVOICE PLUS took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark SYNC INVOICE PART took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
-}
+};
 
 const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
 
@@ -157,4 +160,5 @@ monitoringFilesController.registerControll(fileNameAnagrafica, syncrAnagrafica);
 
 monitoringFilesController.registerControll(fileNameFatture, syncrFatture);
 
+monitoringFilesController.registerControll(fileNameFatturePart, syncrFatturePart);
 

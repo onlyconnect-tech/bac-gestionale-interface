@@ -1,10 +1,10 @@
-'use strict'
+'use strict';
 
 const fs = require('fs');
 
 const Logger = require('../config/winston.js');
 
-const logger = new Logger("MONITORING_FILES_CONTROLLER");
+const logger = new Logger('MONITORING_FILES_CONTROLLER');
 
 class StatusCheck {
 
@@ -35,15 +35,15 @@ class MonitoringFilesController {
 
             logger.debug('START CHECKING %s', fileName);
 
-            logger.debug("CONTAINS FILE CHANGED: %s -> %O", fileName, this.filesToMonitor.get(fileName));
-            logger.debug("STATUS CHECKING: %s -> %O", fileName, this.filesModificationStatus.get(fileName));
+            logger.debug('CONTAINS FILE CHANGED: %s -> %O', fileName, this.filesToMonitor.get(fileName));
+            logger.debug('STATUS CHECKING: %s -> %O', fileName, this.filesModificationStatus.get(fileName));
 
             var statusFile = this.filesModificationStatus.get(fileName);
 
             if (statusFile == null) {
 
                 logger.debug('FIRST TIME');
-                logger.info("DOING SYNCR %s", fileName);
+                logger.info('DOING SYNCR %s', fileName);
                 // do work
                 var now = new Date();
                 this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
@@ -53,7 +53,7 @@ class MonitoringFilesController {
                 // on finish
                 cb().then((result) => {
                     
-                    logger.debug("RESULT: %O", result);
+                    logger.debug('RESULT: %O', result);
 
                     if(result.status === 'OK') {
                         logger.info('OK SYNCRONIZATION');
@@ -74,13 +74,13 @@ class MonitoringFilesController {
 
             } else {
 
-                logger.debug("STATUS FILE: %O", statusFile);
+                logger.debug('STATUS FILE: %O', statusFile);
 
                 // check time 
                 if (!statusFile.working &&
                     (this.filesToMonitor.get(fileName) ? this.filesToMonitor.get(fileName).getTime() > statusFile.timeCheck : false)) {
 
-                    logger.info("DOING SYNCR %s", fileName);
+                    logger.info('DOING SYNCR %s', fileName);
 
                     // do work
                     var now = new Date();
@@ -92,7 +92,7 @@ class MonitoringFilesController {
 
                     cb().then((result) => {
 
-                        logger.debug("RESULT: %O", result);
+                        logger.debug('RESULT: %O', result);
 
                         if(result.status === 'OK') {
                             logger.info('OK SYNCRONIZATION %s', fileName);
@@ -110,19 +110,19 @@ class MonitoringFilesController {
                 } else {
 
                     if(statusFile.working) {
-                        logger.debug("STILL WORKING SYNCRONIZATION");
+                        logger.debug('STILL WORKING SYNCRONIZATION');
                     } else {
-                        logger.info("DO NOTHING - YET SYNCHRONIZED %s", fileName);
+                        logger.info('DO NOTHING - YET SYNCHRONIZED %s', fileName);
                     }
                 }
             }
 
             logger.debug('****************** NOW **********************');
-            logger.debug("STATUS CHECKING: %s -> %O", fileName, this.filesModificationStatus.get(fileName));
-            logger.debug("*********************************************");
+            logger.debug('STATUS CHECKING: %s -> %O', fileName, this.filesModificationStatus.get(fileName));
+            logger.debug('*********************************************');
             logger.debug();
 
-        }
+        };
 
         await controller(); // start now
         const timer = setInterval(() => { controller(); }, this.frequency * 1000);
@@ -132,8 +132,8 @@ class MonitoringFilesController {
         });
 
         fs.watchFile(fileName, (curr, prev) => {
-            console.log(`the current mtime is: ${curr.mtime}`);
-            console.log(`the previous mtime was: ${prev.mtime}`);
+            logger.info(`the current mtime is: ${curr.mtime}`);
+            logger.info(`the previous mtime was: ${prev.mtime}`);
         
             this.filesToMonitor.set(fileName, curr.mtime);
         

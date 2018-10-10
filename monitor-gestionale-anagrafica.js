@@ -1,7 +1,7 @@
 import Parser from 'node-dbf';
 import {
     Observable
-} from "rxjs/Observable";
+} from 'rxjs/Observable';
 
 const Promise = require('bluebird');
 const moment = require('moment');
@@ -23,7 +23,7 @@ async function doProcessBlockRecords(cache, mongo, recordsBlock) {
         current = current.then(async function() {
             return await doInsertRecord(cache, mongo, record); // returns promise
         }).catch(function(err) {
-            logger.error("ERROR RESULT BLOCK: %s", err);
+            logger.error('ERROR RESULT BLOCK: %s', err);
             return Promise.reject(err);
         });
 
@@ -95,8 +95,8 @@ async function doInsertRecord(cache, mongo, record) {
             indSedeLeg: info.indSedeLeg,
             codiceFisc: info.codiceFisc,
             pIva: info.pIva,
-            dataIns: moment(info.dataIns, "YYYYMMDD").toDate(),
-            dataUMOD: moment(info.dataUMOD, "YYYYMMDD").toDate(),
+            dataIns: moment(info.dataIns, 'YYYYMMDD').toDate(),
+            dataUMOD: moment(info.dataUMOD, 'YYYYMMDD').toDate(),
             location: location
         };
 
@@ -117,7 +117,7 @@ async function doInsertRecord(cache, mongo, record) {
         const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
 
         // if(restInsertAnagrafica.op !== 'NONE')
-            logger.debug("SYNC ANAG: %j", restInsertAnagrafica);
+        logger.debug('SYNC ANAG: %j', restInsertAnagrafica);
 
         // if op === 'INSERT' add to sync operations
         // if op === 'UPDATE' add to sync operations
@@ -129,7 +129,7 @@ async function doInsertRecord(cache, mongo, record) {
 
     } catch (err) {
         logger.error(err);
-        logger.error("ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d",  err.message, record['@sequenceNumber']);
+        logger.error('ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d',  err.message, record['@sequenceNumber']);
         throw err;
     }
 
@@ -151,117 +151,117 @@ class SynchronizerAnagrafica {
     doWork() {
         
         return new Promise((resolve, reject) => {
-                const parser = new Parser(this.fileName);
-                const mongo = new Mongo(this.urlManogoDb, this.dbName);
+            const parser = new Parser(this.fileName);
+            const mongo = new Mongo(this.urlManogoDb, this.dbName);
 
-                var observerG;
+            var observerG;
 
-                var accumulatorRecords = [];
-                var numErrors = 0;
+            var accumulatorRecords = [];
+            var numErrors = 0;
 
-                var observable = Observable.create(function subscribe(observer) {
-                    observerG = observer;
-                });
+            var observable = Observable.create(function subscribe(observer) {
+                observerG = observer;
+            });
 
-                observable.subscribe(async (record) => {
-                    const splitLength = 500;
+            observable.subscribe(async (record) => {
+                const splitLength = 500;
 
-                    accumulatorRecords.push(record);
+                accumulatorRecords.push(record);
 
-                    if (accumulatorRecords.length == splitLength) {
-                        const recordsBlock = accumulatorRecords;
+                if (accumulatorRecords.length == splitLength) {
+                    const recordsBlock = accumulatorRecords;
 
-                        accumulatorRecords = [];
-                        // call insert block
+                    accumulatorRecords = [];
+                    // call insert block
 
-                        var resultsP = doProcessBlockRecords(this.cache, mongo, recordsBlock);
-
-                        this.arrPromisesBlocksProcessing.push(resultsP);
-
-                    }
-
-
-                }, (err) => {
-
-                    logger.error("%s", err);
-
-                    /*
-                        
-                        */
-
-                }, async () => {
-                    // done
-
-                    logger.info("PROCESSING LAST BLOCK!!!");
-
-                    var resultsP = doProcessBlockRecords(this.cache, mongo, accumulatorRecords);
+                    var resultsP = doProcessBlockRecords(this.cache, mongo, recordsBlock);
 
                     this.arrPromisesBlocksProcessing.push(resultsP);
 
-                    Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
+                }
 
-                        logger.info('LAST: %O', results);
 
-                        resolve({
-                            status: "OK",
-                            numRow: this.numRow
-                        });
+            }, (err) => {
 
-                    }, (err) => {
+                logger.error('%s', err);
+
+                /*
                         
-                        logger.error("LAST: %s", err);
+                        */
 
-                        return resolve({
-                            status: "ERROR",
-                            numRow: this.numRow,
-                            numErrors: numErrors
-                        }); 
+            }, async () => {
+                // done
 
-                    }).finally(()=> {
+                logger.info('PROCESSING LAST BLOCK!!!');
 
-                       logger.info('COMPLETE REACHED - IN FINALLY!!!');
+                var resultsP = doProcessBlockRecords(this.cache, mongo, accumulatorRecords);
 
-                       mongo.closeClient();
+                this.arrPromisesBlocksProcessing.push(resultsP);
 
-                       this.numRow = 0;
+                Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
 
-                       this.arrPromisesBlocksProcessing = [];
+                    logger.info('LAST: %O', results);
+
+                    resolve({
+                        status: 'OK',
+                        numRow: this.numRow
                     });
-                   
-                });
-
-                mongo.initDBConnection().then(() => {
-
-                    parser.on('start', (p) => {
-                        logger.info('dBase file %s parsing has started', this.fileName);
-                    });
-
-                    parser.on('header', (h) => { 
-                        logger.info('dBase file %s header has been parsed %j', this.fileName, h);
-                    });
-
-                    parser.on('record', (record) => {
-                        this.numRow++;
-                        //console.log( JSON.stringify(record)); 
-                        observerG.next(record);
-                    });
-
-                    parser.on('end', (p) => {
-                        logger.info('Finished parsing the dBase file %s - numRow: %d', this.fileName, this.numRow);
-                        observerG.complete();
-                    });
-
-                    parser.parse();
 
                 }, (err) => {
-                    logger.error("ERROR: %s", err);
-                    reject(err);
+                        
+                    logger.error('LAST: %s', err);
+
+                    return resolve({
+                        status: 'ERROR',
+                        numRow: this.numRow,
+                        numErrors: numErrors
+                    }); 
+
+                }).finally(()=> {
+
+                    logger.info('COMPLETE REACHED - IN FINALLY!!!');
+
+                    mongo.closeClient();
+
+                    this.numRow = 0;
+
+                    this.arrPromisesBlocksProcessing = [];
+                });
+                   
+            });
+
+            mongo.initDBConnection().then(() => {
+
+                parser.on('start', (p) => {
+                    logger.info('dBase file %s parsing has started', this.fileName);
                 });
 
-            }); // close promise
+                parser.on('header', (h) => { 
+                    logger.info('dBase file %s header has been parsed %j', this.fileName, h);
+                });
 
-        } // fine doWork
+                parser.on('record', (record) => {
+                    this.numRow++;
+                    //console.log( JSON.stringify(record)); 
+                    observerG.next(record);
+                });
 
-    }
+                parser.on('end', (p) => {
+                    logger.info('Finished parsing the dBase file %s - numRow: %d', this.fileName, this.numRow);
+                    observerG.complete();
+                });
 
-    module.exports = SynchronizerAnagrafica;
+                parser.parse();
+
+            }, (err) => {
+                logger.error('ERROR: %s', err);
+                reject(err);
+            });
+
+        }); // close promise
+
+    } // fine doWork
+
+}
+
+module.exports = SynchronizerAnagrafica;

@@ -12,7 +12,7 @@ const test1 = async ()=> {
         
         var valueNO = null;
         
-        valueNO = await cache.checkAnagraficaHash(1000, "PLUTO");
+        valueNO = await cache.checkAnagraficaHash(1000, 'PLUTO');
         
         assert(valueNO === ValueStatus.NOVALUE);
         // console.log(valueNO);
@@ -28,9 +28,9 @@ const test1 = async ()=> {
         assert(value === ValueStatus.MODIFIED);
 
     } catch(err) {
-        console.log("************************");
-        console.log(err)
-        console.log("************************");
+        console.log('************************');
+        console.log(err);
+        console.log('************************');
     }
 }
 
