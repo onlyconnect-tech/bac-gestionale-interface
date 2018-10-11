@@ -2,10 +2,23 @@
 
 const Cache = require('../lib/cache').Cache;
 
+const argv = require('yargs')
+    .usage('Usage: $0 option collection \n e.g $0 -d collection')
+    .alias('d', 'delete')
+    .nargs('d', 1)
+    .describe('d', 'Delete collection')
+    .choices('d', ['ANAGRAFICA', 'INVOICES', 'INVOICES-PART'])
+    .demandOption(['d'])
+    .help('h')
+    .alias('h', 'help')
+    .epilog('Copyright OnlyConnect 2018')
+    .argv;
+
+
 const cleanAnagrafica = async ()=> {
 
     try {
-        const cache = new Cache('./cache_db/gestionale-db-test');
+        const cache = new Cache('./cache_db/gestionale-db');
         
         const db = cache.db;
 
@@ -122,5 +135,21 @@ const cleanInvoicesPart = async ()=> {
     }
 }
 
-cleanInvoicesPart();
+if(argv.d === 'ANAGRAFICA') {
+    console.log('DELETING ANAGRAFICA');
+
+    cleanAnagrafica();
+
+} else if(argv.d === 'INVOICES') {
+    console.log('DELETING INVOICES');
+
+    cleanInvoices();
+
+} else if(argv.d === 'INVOICES-PART') {
+    console.log('DELETING INVOICES-PART');
+
+    cleanInvoicesPart();
+} 
+
+
 
