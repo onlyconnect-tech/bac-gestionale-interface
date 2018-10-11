@@ -7,7 +7,32 @@ https://zellwk.com/blog/crud-express-mongodb/
 
 ## CARICAMENTO DATI
 
-node start-monitor-gestionale
+`node start-monitor-gestionale` using default `env.json` config file or `node start-monitor-gestionale -c <CONFIG_FILE>` with a 
+specific config file.
+
+### CONFIG FILE
+
+Example [env_template.json](./env_template.json)
+```json
+{
+    "MONGO_URL": "<VALUE MONGO URL>",
+    "DB_NAME": "<VALUE DB NAME>",
+    "SYNC_FREQUENCY": 60,
+    "DBF_DIR_PATH": "<PATH DIR DBF FILES>"
+}
+```
+If no file is specified with `-c` option, default `./env.json` is used.
+
+| Param| Desc|
+|---|---|
+| _MONGO_URL_   |  Url mongo db server |
+| _DB_NAME_ | mongo db instance name |
+| _SYNC_FREQUENCY_ | seconds frequency for check synchronization |
+| _DBF_DIR_PATH_ | path dir `.DBF` files |
+
+### CLEAN CACHE
+
+`node tools/clean-cache.js -d ANAGRAFICA -p ./cache_db/gestionale-db-test`
 
 ## SERVER
 
@@ -17,8 +42,6 @@ http://localhost:3000/delete-anagrafica
 
 ## VALIDATION
 https://medium.com/@piotrkarpaa/handling-joi-validation-errors-in-hapi-17-26fc07448576
-
-
 
 https://codeburst.io/joi-validate-input-and-define-databases-in-javascript-84adc6f1474b
 

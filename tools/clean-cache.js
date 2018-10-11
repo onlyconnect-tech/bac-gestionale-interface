@@ -3,22 +3,25 @@
 const Cache = require('../lib/cache').Cache;
 
 const argv = require('yargs')
-    .usage('Usage: $0 option collection \n e.g $0 -d collection')
+    .usage('Usage: $0 -d [ANAGRAFICA|] \n e.g $0 -d ANAGRAFICA')
     .alias('d', 'delete')
     .nargs('d', 1)
     .describe('d', 'Delete collection')
     .choices('d', ['ANAGRAFICA', 'INVOICES', 'INVOICES-PART'])
     .demandOption(['d'])
+    .default('p', './cache_db/gestionale-db')
+    .alias('p', 'path')
+    .describe('p', 'Path db cache')
     .help('h')
     .alias('h', 'help')
     .epilog('Copyright OnlyConnect 2018')
     .argv;
 
 
-const cleanAnagrafica = async ()=> {
+const cleanAnagrafica = async (pathDBCache)=> {
 
     try {
-        const cache = new Cache('./cache_db/gestionale-db');
+        const cache = new Cache(pathDBCache);
         
         const db = cache.db;
 
@@ -40,14 +43,6 @@ const cleanAnagrafica = async ()=> {
                 db.close();
             });
 
-            // invoice:
-
-            // invoice-part: 
-
-        // await cache.close();
-
-        // setInterval(()=> {}, 100);
-
     } catch(err) {
         console.log('************************');
         console.log(err);
@@ -55,10 +50,10 @@ const cleanAnagrafica = async ()=> {
     }
 };
 
-const cleanInvoices = async ()=> {
+const cleanInvoices = async (pathDBCache)=> {
 
     try {
-        const cache = new Cache('./cache_db/gestionale-db');
+        const cache = new Cache(pathDBCache);
         
         const db = cache.db;
 
@@ -80,14 +75,6 @@ const cleanInvoices = async ()=> {
                 db.close();
             });
 
-            // invoice:
-
-            // invoice-part: 
-
-        // await cache.close();
-
-        // setInterval(()=> {}, 100);
-
     } catch(err) {
         console.log('************************');
         console.log(err);
@@ -95,10 +82,10 @@ const cleanInvoices = async ()=> {
     }
 };
 
-const cleanInvoicesPart = async ()=> {
+const cleanInvoicesPart = async (pathDBCache)=> {
 
     try {
-        const cache = new Cache('./cache_db/gestionale-db');
+        const cache = new Cache(pathDBCache);
         
         const db = cache.db;
 
@@ -120,14 +107,6 @@ const cleanInvoicesPart = async ()=> {
                 db.close();
             });
 
-            // invoice:
-
-            // invoice-part: 
-
-        // await cache.close();
-
-        // setInterval(()=> {}, 100);
-
     } catch(err) {
         console.log('************************');
         console.log(err);
@@ -135,20 +114,22 @@ const cleanInvoicesPart = async ()=> {
     }
 }
 
+console.log('Path db cache:', argv.p);
+
 if(argv.d === 'ANAGRAFICA') {
     console.log('DELETING ANAGRAFICA');
 
-    cleanAnagrafica();
+    cleanAnagrafica(argv.p);
 
 } else if(argv.d === 'INVOICES') {
     console.log('DELETING INVOICES');
 
-    cleanInvoices();
+    cleanInvoices(argv.p);
 
 } else if(argv.d === 'INVOICES-PART') {
     console.log('DELETING INVOICES-PART');
 
-    cleanInvoicesPart();
+    cleanInvoicesPart(argv.p);
 } 
 
 

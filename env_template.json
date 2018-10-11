@@ -2,5 +2,5 @@
     "MONGO_URL": "<VALUE MONGO URL>",
     "DB_NAME": "<VALUE DB NAME>",
     "SYNC_FREQUENCY": 60,
-    "DBF_DIR_PATH": "./data"
+    "DBF_DIR_PATH": "<PATH DIR DBF FILES>"
 }
