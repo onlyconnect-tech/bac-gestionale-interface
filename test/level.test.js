@@ -27,6 +27,8 @@ const test1 = async ()=> {
 
         assert(value === ValueStatus.MODIFIED);
 
+        await cache.close();
+        
     } catch(err) {
         console.log('************************');
         console.log(err);
