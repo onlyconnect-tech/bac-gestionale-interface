@@ -8,7 +8,7 @@ const moment = require('moment');
 const hash = require('object-hash');
 const Logger = require('./config/winston.js');
 
-const logger = new Logger('MG_ANAGRAFICA');
+const logger = new Logger('SYNC_ANAGRAFICA');
 
 import Mongo from './lib/mongo';
 
@@ -261,6 +261,11 @@ class SynchronizerAnagrafica {
         }); // close promise
 
     } // fine doWork
+
+
+    doStop() {
+        logger.info('STOP SYNC ANAGRAFICA'); 
+    }
 
 }
 

@@ -35,7 +35,7 @@ const syncrProcedure = async (synchronizerWorker) => {
     } finally {
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);
-        logger.info(`Benchmark SYNC ANAG took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
+        logger.info(`Benchmark SYNC file:  ${synchronizerWorker.fileName} took ${fDiff[0]} minutes / ${fDiff[1]} seconds`);
     }
 
 };
@@ -187,6 +187,8 @@ class MonitoringFilesController {
 
 
         logger.info('STOP CONTROLL TODO');
+
+
         return Promise.resolve(1); 
 
     }

@@ -23,12 +23,12 @@ Example [env_template.json](./env_template.json)
 ```
 If no file is specified with `-c` option, default `./env.json` is used.
 
-| Param| Desc|
-|---|---|
-| _MONGO_URL_   |  Url mongo db server |
-| _DB_NAME_ | mongo db instance name |
-| _SYNC_FREQUENCY_ | seconds frequency for check synchronization |
-| _DBF_DIR_PATH_ | path dir `.DBF` files |
+| Param| Desc| Default |
+|---|---|---|
+| _MONGO_URL_   |  Url mongo db server | **NONE** |
+| _DB_NAME_ | mongo db instance name | **NONE** |
+| _SYNC_FREQUENCY_ | seconds frequency for check synchronization | **NONE** |
+| _DBF_DIR_PATH_ | path dir `.DBF` files | '_./data_' |
 
 ### CLEAN CACHE
 

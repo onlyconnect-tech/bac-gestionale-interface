@@ -4,10 +4,11 @@ import {
 } from 'rxjs/Observable';
 
 const Promise = require('bluebird');
+const moment = require('moment');
 const hash = require('object-hash');
 const Logger = require('./config/winston.js');
 
-const logger = new Logger('MG_FATTURE_PART');
+const logger = new Logger('SYNC_FATTURE');
 
 import Mongo from './lib/mongo';
 
@@ -35,63 +36,62 @@ async function doInsertRecord(cache, mongo, record) {
     var seqNumberGest = record['@sequenceNumber'];
     var idFattura = record.NUMDOC;
     var annDoc = record.ANNDOC;
-    var numRig = record.NUMRIG;
-    var codArt = record.CODART;
-    var desArt = record.DESART;
-    var prezzo = record.PREZZO;
-    var provv = record.PROVV;
-    var aliva = record.ALIVA;
-
+    var datDoc = moment(record.DATDOC, 'YYYYMMDD').toDate();
+    var codCliente = record.CODCF;
+    var totImp = record.TOTIMP;
+    var totIVA = record.TOTIVA;
+    var totRit = record.RTIMPRIT;
+    var rtimpNON = record.RTIMPNON;
     var isDeleted = record['@deleted'];
 
     try {
 
-        var fatturaPart = {
+        var fattura = {
             _id: seqNumberGest,
             idFattura: idFattura,
             annDoc: annDoc,
-            numRig: numRig,
-            codArt: codArt,
-            desArt: desArt,
-            prezzo: prezzo,
-            provv: provv,
-            aliva: aliva,
+            datDoc: datDoc,
+            codCliente: codCliente,
+            totImp: totImp,
+            totIVA: totIVA,
+            totRit: totRit,
+            rtimpNON: rtimpNON,
             isDeleted: isDeleted
         };
 
-        var hashValue = hash(fatturaPart);
-        fatturaPart.hash = hashValue;
+        var hashValue = hash(fattura);
+        fattura.hash = hashValue;
 
-        var cacheStatus = await cache.checkInvoicePartHash(fatturaPart._id, fatturaPart.hash);
+        var cacheStatus = await cache.checkInvoiceHash(fattura._id, fattura.hash);
 
         if(cacheStatus === ValueStatus.SAME) {
             return {
                 op: 'NONE',
-                seqNumber: fatturaPart._id
+                seqNumber: fattura._id
             };
         }
 
-        logger.debug('----> CHECKING FATTURA PART seqNumber: %d', seqNumberGest);
+        logger.debug('----> CHECKING FATTURA seqNumber: %d', seqNumberGest);
  
-        const resultOp = await mongo.insertOrUpdateFatturaPart(fatturaPart);
+        const resultOp = await mongo.insertOrUpdateFattura(fattura);
 
         // if (resultOp.op !== 'NONE')
-        logger.debug('SYNC FATTURA PART: %j', resultOp);
+        logger.debug('SYNC FATTURA: %j', resultOp);
         
-        await cache.setInvoicePartHash(fatturaPart._id, fatturaPart.hash);
+        await cache.setInvoiceHash(fattura._id, fattura.hash);
 
         return resultOp;
 
     } catch (err) {
         logger.error(err);
-        logger.error('ERROR INSERT FATTURA PART: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
+        logger.error('ERROR INSERT FATTURA: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
         throw err;
 
     }
 
 } // fine doInsertRecord
 
-class SynchronizerFatturePart {
+class SynchronizerFatture {
 
     constructor(fileName, cache, urlManogoDb, dbName) {
         this.fileName = fileName;
@@ -215,7 +215,9 @@ class SynchronizerFatturePart {
 
     } // fine doWork
 
-
+    doStop() {
+        logger.info('STOP SYNC INVOICES'); 
+    }
 }
 
-module.exports = SynchronizerFatturePart;
+module.exports = SynchronizerFatture;
