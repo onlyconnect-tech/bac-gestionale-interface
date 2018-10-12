@@ -48,21 +48,38 @@ class StatusCheck {
     }
 }
 
+/**
+ * Classe di controllo dei syncrhonizer.
+ * @example
+ * 
+ * var monitor = new MonitoringFilesController(60)
+ * 
+ */
+export default class MonitoringFilesController {
 
-class MonitoringFilesController {
-
+    /**
+     * 
+     * @param {number} frequency 
+     */
     constructor(frequency) {
 
         this.frequency = frequency;
 
+        // timers holders
         this.operationMappings = new Map();
-
-        this.filesToMonitor = new Map();
+        this.synchronizerMappings = new Map();
 
         // contains file system files status
+        this.filesToMonitor = new Map();
+        
         this.filesModificationStatus = new Map();
     }
 
+    /**
+     * Per registrare i syncronizer
+     * 
+     * @param {Object} synchronizerWorker 
+     */
     async registerControll(synchronizerWorker) {
 
         const fileName = synchronizerWorker.fileName;
@@ -163,6 +180,19 @@ class MonitoringFilesController {
 
         };
 
+        this.synchronizerMappings.set(fileName, synchronizerWorker);
+
+        fs.watchFile(fileName, (curr, prev) => {
+
+            logger.info('**** MOD FILE: %s', fileName);
+            logger.info(`the current mtime is: ${curr.mtime}`);
+            logger.info(`the previous mtime was: ${prev.mtime}`);
+            logger.info('*****************************************');
+        
+            this.filesToMonitor.set(fileName, curr.mtime);
+        
+        });
+
         await controller(); // start now
         const timer = setInterval(() => { controller(); }, this.frequency * 1000);
 
@@ -170,13 +200,7 @@ class MonitoringFilesController {
             timer: timer
         });
 
-        fs.watchFile(fileName, (curr, prev) => {
-            logger.info(`the current mtime is: ${curr.mtime}`);
-            logger.info(`the previous mtime was: ${prev.mtime}`);
-        
-            this.filesToMonitor.set(fileName, curr.mtime);
-        
-        });
+
 
     }
 
@@ -185,9 +209,22 @@ class MonitoringFilesController {
 
         // stoppare i workers
 
+        // this.operationMappings filename timer
 
-        logger.info('STOP CONTROLL TODO');
 
+        logger.info('STOP CONTROLL MONITORING');
+
+        for (let [filename, timer] of this.operationMappings) {
+            logger.info('--> %s STOPPING TIMER', filename);
+            
+            clearInterval(timer);
+        }
+        
+        for (let [filename, synchronizer] of this.synchronizerMappings) {
+            logger.info('--> %s STOPPING SYNCRHONIZER', filename);
+            
+            synchronizer.doStop();
+        }
 
         return Promise.resolve(1); 
 
