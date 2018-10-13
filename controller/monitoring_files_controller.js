@@ -230,6 +230,7 @@ export default class MonitoringFilesController {
             synchronizer.doStop();
         }
 
+        // miising registration in promiseMapping 
         var arrCurrPromises = [];
         for (let [filename, promise] of this.promiseMapping) {
             arrCurrPromises.push(promise);
