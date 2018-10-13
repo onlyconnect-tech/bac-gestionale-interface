@@ -110,7 +110,7 @@ export default class MonitoringFilesController {
                 // do syncr
 
                 // on finish
-                cb().then((result) => {
+                let promOp = cb().then((result) => {
                     
                     logger.debug('RESULT: %O', result);
 
@@ -127,9 +127,10 @@ export default class MonitoringFilesController {
                         this.filesModificationStatus.set(fileName, statusFile);
                     }
                     
+                    return Promise.resolve();
                 });
 
-
+                this.promiseMapping.set(fileName, promOp);
 
             } else {
 
@@ -149,7 +150,7 @@ export default class MonitoringFilesController {
 
                     // on finish
 
-                    cb().then((result) => {
+                    let promOp = cb().then((result) => {
 
                         logger.debug('RESULT: %O', result);
 
@@ -165,7 +166,11 @@ export default class MonitoringFilesController {
                             this.filesModificationStatus.set(fileName, statusFile);
                         }
 
+                        return Promise.resolve();
                     });
+
+                    this.promiseMapping.set(fileName, promOp);
+
                 } else {
 
                     if(statusFile.working) {
