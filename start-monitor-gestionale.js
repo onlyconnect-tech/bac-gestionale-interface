@@ -102,6 +102,7 @@ process.on('SIGINT', async function() {
     // stop registered processing TODO
     await monitoringFilesController.doStopControll();
     
+    /*
     try {
         await cache.close();
     } catch(err) {
@@ -109,5 +110,6 @@ process.on('SIGINT', async function() {
     } finally {
         process.exit();
     }
+    */
     
 });

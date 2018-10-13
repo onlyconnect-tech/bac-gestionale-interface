@@ -69,6 +69,9 @@ export default class MonitoringFilesController {
         this.operationMappings = new Map();
         this.synchronizerMappings = new Map();
 
+        // to do -add promise working
+        this.promiseMapping = new Map();
+
         // contains file system files status
         this.filesToMonitor = new Map();
         
@@ -80,7 +83,7 @@ export default class MonitoringFilesController {
      * 
      * @param {Object} synchronizerWorker 
      */
-    async registerControll(synchronizerWorker) {
+    registerControll(synchronizerWorker) {
 
         const fileName = synchronizerWorker.fileName;
         const cb = () => {
@@ -193,7 +196,8 @@ export default class MonitoringFilesController {
         
         });
 
-        await controller(); // start now
+        controller(); // start now
+        
         const timer = setInterval(() => { controller(); }, this.frequency * 1000);
 
         this.operationMappings.set(fileName, {
@@ -217,7 +221,7 @@ export default class MonitoringFilesController {
         for (let [filename, timer] of this.operationMappings) {
             logger.info('--> %s STOPPING TIMER', filename);
             
-            clearInterval(timer);
+            clearInterval(timer.timer);
         }
         
         for (let [filename, synchronizer] of this.synchronizerMappings) {
@@ -226,7 +230,13 @@ export default class MonitoringFilesController {
             synchronizer.doStop();
         }
 
-        return Promise.resolve(1); 
+        var arrCurrPromises = [];
+        for (let [filename, promise] of this.promiseMapping) {
+            arrCurrPromises.push(promise);
+        }
+
+
+        return Promise.all(arrCurrPromises); 
 
     }
 
