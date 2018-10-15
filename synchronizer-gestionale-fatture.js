@@ -14,41 +14,8 @@ import Mongo from './lib/mongo';
 
 const ValueStatus = require('./lib/cache').ValueStatus;
 
-const STATUS = Object.freeze({
-    INACTIVE: 'inactive',
-    ACTIVE: 'active',
-    STOP: 'stop'
-});
-
-class StatusHolder {
-    constructor(status) {
-        this.status = status;
-    }   
-}
-
-async function doProcessBlockRecords(cache, mongo, recordsBlock, statusHolder) {
-
-    var current = Promise.resolve();
-
-    return Promise.all(recordsBlock.map((record) => {
-
-        current = current.then(async function() {
-            if (statusHolder.status === STATUS.ACTIVE)
-                return await doInsertRecord(cache, mongo, record); // returns promise
-            else 
-                return {
-                    op: 'SKIP',
-                    seqNumber: record['@sequenceNumber']
-                };
-        }).catch(function(err) {
-            logger.error('ERROR RESULT BLOCK: %s', err);
-            return Promise.reject(err);
-        });
-
-        return current;
-
-    }));
-}
+const StatusHolder = require('./synchronizer-commons').StatusHolder;
+const doProcessBlockRecords = require('./synchronizer-commons').doProcessBlockRecords;
 
 async function doInsertRecord(cache, mongo, record) {
     var seqNumberGest = record['@sequenceNumber'];
@@ -120,12 +87,12 @@ class SynchronizerFatture {
         this.arrPromisesBlocksProcessing = [];
         this.numRow = 0;
 
-        this.statusHolder = new StatusHolder(STATUS.INACTIVE);
+        this.statusHolder = new StatusHolder();
     }
 
     doWork() {
 
-        this.statusHolder.status = STATUS.ACTIVE;
+        this.statusHolder.setStatusActive();
         
         return new Promise((resolve, reject) => {
             const parser = new Parser(this.fileName);
@@ -149,7 +116,7 @@ class SynchronizerFatture {
                     accumulatorRecords = [];
                     // call insert block
 
-                    var resultsP = doProcessBlockRecords(this.cache, mongo, recordsBlock, this.statusHolder);
+                    var resultsP = doProcessBlockRecords(logger, this.cache, mongo, recordsBlock, this.statusHolder, doInsertRecord);
 
                     this.arrPromisesBlocksProcessing.push(resultsP);
 
@@ -168,7 +135,7 @@ class SynchronizerFatture {
 
                 logger.info('PROCESSING LAST BLOCK!!!');
 
-                var resultsP = doProcessBlockRecords(this.cache, mongo, accumulatorRecords, this.statusHolder);
+                var resultsP = doProcessBlockRecords(logger, this.cache, mongo, accumulatorRecords, this.statusHolder, doInsertRecord);
 
                 this.arrPromisesBlocksProcessing.push(resultsP);
 
@@ -239,7 +206,7 @@ class SynchronizerFatture {
 
     doStop() {
 
-        this.statusHolder.status = STATUS.STOP;
+        this.statusHolder.setStatusStop();
 
         logger.info('STOP SYNC INVOICES'); 
     }

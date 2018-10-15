@@ -237,8 +237,8 @@ export default class MonitoringFilesController {
 
         // miising registration in promiseMapping 
         var arrCurrPromises = [];
-        for (let [filename, promise] of this.promiseMapping) {
-            arrCurrPromises.push(promise);
+        for (let valuePromise of this.promiseMapping.values()) {
+            arrCurrPromises.push(valuePromise);
         }
 
 

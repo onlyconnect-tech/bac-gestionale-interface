@@ -89,7 +89,6 @@ const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlM
 
 const synchronizerFatturePart = new SynchronizerFatturePart(fileNameFatturePart, cache, urlManogoDb, dbName);
 
-
 const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
 
 monitoringFilesController.registerControll(synchronizerAnagrafica);
