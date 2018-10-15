@@ -20,6 +20,15 @@ class StatusHolder {
     }
 }
 
+/**
+ * 
+ * @param {Logger} logger 
+ * @param {Chache} cache 
+ * @param {Mongo} mongo 
+ * @param {Array(Object)} recordsBlock 
+ * @param {StatusHolder} statusHolder 
+ * @param {function} doInsertRecord 
+ */
 async function doProcessBlockRecords(logger, cache, mongo, recordsBlock, statusHolder, doInsertRecord) {
     
     var current = Promise.resolve();

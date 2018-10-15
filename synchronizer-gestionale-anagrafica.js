@@ -4,7 +4,7 @@ import {
 } from 'rxjs/Observable';
 
 const Promise = require('bluebird');
-const Logger = require('./config/winston.js');
+const Logger = require('./lib/logger.js');
 
 const logger = new Logger('SYNC_ANAGRAFICA');
 
@@ -120,8 +120,15 @@ async function doInsertRecord(cache, mongo, record) {
 
 }
 
-class SynchronizerAnagrafica {
+export default class SynchronizerAnagrafica {
 
+    /**
+     * 
+     * @param {string} fileName 
+     * @param {Cache} cache 
+     * @param {string} urlManogoDb 
+     * @param {string} dbName 
+     */
     constructor(fileName, cache, urlManogoDb, dbName) {
         this.fileName = fileName;
         this.cache = cache;

@@ -5,7 +5,7 @@ require = require('esm')(module/*, options*/);
 const DEFAULT_CONF_FILE = './env.json';
 const fs = require('fs');
 const path = require('path');
-const Logger = require('./config/winston');
+const Logger = require('./lib/logger');
 
 const argv = require('yargs')
     .usage('Usage: $0 option config_file \n e.g $0 -c config_file')

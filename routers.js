@@ -17,8 +17,8 @@ const handleError = function (request, h, err) {
     return h.response(err)
         .takeover()
     */
-   console.log(JSON.stringify(err));
-   throw err;
+    console.log(JSON.stringify(err));
+    throw err;
 };
 
 const routes = [{
@@ -64,9 +64,9 @@ const routes = [{
         const mongo = this.mongo;
 
         try {
-          await mongo.deleteAnagrafiche();
+            await mongo.deleteAnagrafiche();
         
-          return {OP: 'delete-anagrafica', RESULT: 'OK'};
+            return {OP: 'delete-anagrafica', RESULT: 'OK'};
         } catch(e) {
             return {OP: 'delete-anagrafica', RESULT: 'ERROR'};
         }
@@ -144,123 +144,123 @@ const routes = [{
 
         return mongo.findAnagraficheBySequenceNumber(id);
         
-        }
-    }, {
-        method: 'GET',
-        path: '/get-anagrafica-by-codcli/{codcli}',
-        handler: async function (request, h) {
+    }
+}, {
+    method: 'GET',
+    path: '/get-anagrafica-by-codcli/{codcli}',
+    handler: async function (request, h) {
             
-            const mongo = this.mongo;
+        const mongo = this.mongo;
     
-            // find id-values
+        // find id-values
     
-            var codcli = request.params.codcli;
+        var codcli = request.params.codcli;
     
-            return mongo.findAnagraficheByCodCli(codcli);
+        return mongo.findAnagraficheByCodCli(codcli);
             
-            }
-        }, {  
-        method: 'GET',
-        path: '/add',
-        handler: async (request, h) => {
+    }
+}, {  
+    method: 'GET',
+    path: '/add',
+    handler: async (request, h) => {
 
-          let server = request.server;
-          let result = null;
-          try {
+        let server = request.server;
+        let result = null;
+        try {
             result = await server.methods.add(1, 2);
             return result;
-          } catch (err) {
+        } catch (err) {
             // console.log(err);
             // throw err;
             // return "ERROR";
             Bounce.rethrow(err, 'system');
-          }
-          return result;
         }
-      }, {
-          method: 'GET',
-          path: '/location',
-          handler: async function (request, h){
+        return result;
+    }
+}, {
+    method: 'GET',
+    path: '/location',
+    handler: async function (request, h){
 
-            const mongo = this.mongo;
-            var locations;
-            try {
-                locations = await mongo.findLocation().toArray();
-            } catch(err) {
-               console.log("", err);
-               Bounce.rethrow(err, 'system');
-            }
-
-            return locations;
-          }
-      }, {
-        method: 'GET',
-        path: '/get-anagrafica-by-location/{location}',
-        handler: async function (request, h){
-          const mongo = this.mongo;
-          
-          var locationName = request.params.location;
-
-          console.log('GET BY LOCATION:', locationName);
-
-          var results;
-
-          try {
-            results = await mongo.getAnagraficaByLocation(locationName);
-          } catch(err) {
+        const mongo = this.mongo;
+        var locations;
+        try {
+            locations = await mongo.findLocation().toArray();
+        } catch(err) {
             console.log("", err);
             Bounce.rethrow(err, 'system');
-          }
-          
-          return results;
         }
-    }, {
-        method: 'GET',
-        path: '/fatture',
-        handler: async function (request, h) {
-            
-            const mongo = this.mongo;
-                    
-            var  res;
-            
-            try {
-                res = await mongo.findFatture();
-            
-            } catch (err) {
-                // res = "CUNARDO!!";
-                console.log("ERR:", err);
-                Bounce.rethrow(err, 'system');
-            }
 
-            console.log("res --->");
-    
-            return res;
-        }
-    }, {
-        method: 'GET',
-        path: '/fatture-by-codcli/{codCli}',
-        handler: async function (request, h) {
-            
-            const mongo = this.mongo;
-            
-            var codCli = request.params.codCli;
-            
-            var  res;
-            
-            try {
-                res = await mongo.findFattureByCodCli(codCli);
-            
-            } catch (err) {
-                // res = "CUNARDO!!";
-                console.log("ERR:", err);
-                Bounce.rethrow(err, 'system');
-            }
-
-            console.log("res --->");
-    
-            return res;
-        }
+        return locations;
     }
+}, {
+    method: 'GET',
+    path: '/get-anagrafica-by-location/{location}',
+    handler: async function (request, h){
+        const mongo = this.mongo;
+          
+        var locationName = request.params.location;
+
+        console.log('GET BY LOCATION:', locationName);
+
+        var results;
+
+        try {
+            results = await mongo.getAnagraficaByLocation(locationName);
+        } catch(err) {
+            console.log("", err);
+            Bounce.rethrow(err, 'system');
+        }
+          
+        return results;
+    }
+}, {
+    method: 'GET',
+    path: '/fatture',
+    handler: async function (request, h) {
+            
+        const mongo = this.mongo;
+                    
+        var  res;
+            
+        try {
+            res = await mongo.findFatture();
+            
+        } catch (err) {
+            // res = "CUNARDO!!";
+            console.log("ERR:", err);
+            Bounce.rethrow(err, 'system');
+        }
+
+        console.log("res --->");
+    
+        return res;
+    }
+}, {
+    method: 'GET',
+    path: '/fatture-by-codcli/{codCli}',
+    handler: async function (request, h) {
+            
+        const mongo = this.mongo;
+            
+        var codCli = request.params.codCli;
+            
+        var  res;
+            
+        try {
+            res = await mongo.findFattureByCodCli(codCli);
+            
+        } catch (err) {
+            // res = "CUNARDO!!";
+            console.log("ERR:", err);
+            Bounce.rethrow(err, 'system');
+        }
+
+        console.log("res --->");
+    
+        return res;
+    }
+}
 ];
 
 

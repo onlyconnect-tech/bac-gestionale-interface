@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 
-const Logger = require('../config/winston.js');
+const Logger = require('../lib/logger.js');
 
 const logger = new Logger('MONITORING_FILES_CONTROLLER');
 
@@ -49,10 +49,10 @@ class StatusCheck {
 }
 
 /**
- * Classe di controllo dei syncrhonizer.
+ * Classe di controllo dei synchronizer.
  * @example
  * 
- * var monitor = new MonitoringFilesController(60)
+ * var monitor = new MonitoringFilesController(60); // monitor every 60 sec.
  * 
  */
 export default class MonitoringFilesController {
@@ -81,7 +81,7 @@ export default class MonitoringFilesController {
     /**
      * Per registrare i syncronizer
      * 
-     * @param {Object} synchronizerWorker 
+     * @param {SynchronizerAnagrafica|SynchronizerFatture|SynchronizerFatturePart} synchronizerWorker 
      */
     registerControll(synchronizerWorker) {
 
@@ -104,7 +104,7 @@ export default class MonitoringFilesController {
                 logger.debug('FIRST TIME');
                 logger.info('DOING SYNCR %s', fileName);
                 // do work
-                var now = new Date();
+                let now = new Date();
                 this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
 
                 // do syncr
@@ -143,7 +143,7 @@ export default class MonitoringFilesController {
                     logger.info('DOING SYNCR %s', fileName);
 
                     // do work
-                    var now = new Date();
+                    let now = new Date();
                     this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
 
                     // do syncr

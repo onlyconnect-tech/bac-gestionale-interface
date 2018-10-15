@@ -5,7 +5,8 @@ import {
 
 const Promise = require('bluebird');
 const hash = require('object-hash');
-const Logger = require('./config/winston.js');
+
+const Logger = require('./lib/logger.js');
 
 const logger = new Logger('SYNC_FATTURE_PART');
 
@@ -76,8 +77,15 @@ async function doInsertRecord(cache, mongo, record) {
 
 } // fine doInsertRecord
 
-class SynchronizerFatturePart {
+export default class SynchronizerFatturePart {
 
+    /**
+     * 
+     * @param {string} fileName 
+     * @param {Cache} cache 
+     * @param {string} urlManogoDb 
+     * @param {string} dbName 
+     */
     constructor(fileName, cache, urlManogoDb, dbName) {
         this.fileName = fileName;
         this.cache = cache;
