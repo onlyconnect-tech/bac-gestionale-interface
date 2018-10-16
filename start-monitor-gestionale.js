@@ -54,9 +54,9 @@ const env = require('env2')(confFile);
 
 const MonitoringFilesController = require('./controller/monitoring_files_controller');
 
-const SynchronizerAnagrafica = require('./synchronizer-gestionale-anagrafica');
-const SynchronizerFatture = require('./synchronizer-gestionale-fatture');
-const SynchronizerFatturePart = require('./synchronizer-gestionale-fatture-part');
+const SynchronizerAnagrafica = require('./synchronizer-anagrafica');
+const SynchronizerFatture = require('./synchronizer-invoices');
+const SynchronizerFatturePart = require('./synchronizer-invoices-part');
 
 const Cache = require('./lib/cache').Cache;
 
