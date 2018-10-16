@@ -48,6 +48,9 @@ export class StatusHolder {
         this._status = STATUS.STOP;
     }
 
+    /**
+     * @return {boolean}
+     */
     isActive() {
         return this._status === STATUS.ACTIVE;
     }
@@ -89,7 +92,7 @@ export async function doProcessBlockRecords(logger, cache, mongo, recordsBlock, 
 }
 
 
-
 exports.StatusHolder = StatusHolder;
 
 exports.doProcessBlockRecords = doProcessBlockRecords;
+
