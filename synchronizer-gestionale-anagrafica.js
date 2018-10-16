@@ -93,7 +93,7 @@ async function doInsertRecord(cache, mongo, record) {
         if(cacheStatus === ValueStatus.SAME) {
             return {
                 op: 'NONE',
-                anagraficaId: anagrafica._id
+                seqNumber: anagrafica._id
             };
         }
 
@@ -130,17 +130,54 @@ export default class SynchronizerAnagrafica {
      * @param {string} dbName 
      */
     constructor(fileName, cache, urlManogoDb, dbName) {
+        /**
+         * @private
+         * @type {string} - name file to sync
+         */
         this.fileName = fileName;
+
+        /**
+         * @private
+         * @type {Cache}
+         */
         this.cache = cache;
+
+        /**
+         * @private
+         * @type {string} - url mongo
+         */
         this.urlManogoDb = urlManogoDb;
+
+        /**
+         * @private
+         * @type {string} - db name mongo
+         */
         this.dbName = dbName;
 
+        /**
+         * @private
+         * @type {Promise[]}
+         */
         this.arrPromisesBlocksProcessing = [];
+
+        /**
+         * @private
+         * @type {number}
+         */
         this.numRow = 0;
 
+        /**
+         * @private
+         * @type {StatusHolder}
+         */
         this.statusHolder = new StatusHolder();
     }
 
+    /**
+     * Execute synchronization
+     * 
+     * @return {Promise}
+     */
     doWork() {
         
         this.statusHolder.setStatusActive();
@@ -152,7 +189,6 @@ export default class SynchronizerAnagrafica {
             var observerG;
 
             var accumulatorRecords = [];
-            var numErrors = 0;
 
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
@@ -208,8 +244,7 @@ export default class SynchronizerAnagrafica {
 
                     return resolve({
                         status: 'ERROR',
-                        numRow: this.numRow,
-                        numErrors: numErrors
+                        numRow: this.numRow
                     }); 
 
                 }).finally(()=> {

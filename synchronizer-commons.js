@@ -1,42 +1,77 @@
 'use strict';
 
+/**
+ * @typedef {Promise<{op: string, seqNumber: number}>} InsertResult
+ * 
+ */
+
+/**
+ * @typedef {function(cache: Cache, mongo: Mongo, record: object[]): InsertResult} insertFunction
+ * @throws Error - if error on insert or update in mongo db
+ */
+
+
 const STATUS = Object.freeze({
     INACTIVE: 'inactive',
     ACTIVE: 'active',
     STOP: 'stop'
 });
 
-class StatusHolder {
+/**
+ * 
+ */
+export class StatusHolder {
+    
     constructor() {
-        this.status = STATUS.INACTIVE;
+        /**
+         * @type {Object} - enum for status INACTIVE | ACTIVE | STOP
+         * @private 
+         */
+        this._status = STATUS.INACTIVE;
     }
     
+    /**
+     * set status ACTIVE
+     * 
+     * @return
+     */
     setStatusActive() {
-        this.status = STATUS.ACTIVE;
+        this._status = STATUS.ACTIVE;
     }
 
+    /**
+     * set status STOP
+     * 
+     * @return
+     */
     setStatusStop() {
-        this.status = STATUS.STOP;
+        this._status = STATUS.STOP;
+    }
+
+    isActive() {
+        return this._status === STATUS.ACTIVE;
     }
 }
 
 /**
  * 
  * @param {Logger} logger 
- * @param {Chache} cache 
+ * @param {Cache} cache 
  * @param {Mongo} mongo 
- * @param {Array(Object)} recordsBlock 
+ * @param {Array<Object>} recordsBlock - array of records
  * @param {StatusHolder} statusHolder 
- * @param {function} doInsertRecord 
+ * @param {insertFunction} doInsertRecord 
+ * 
+ * @return {Promise[]}
  */
-async function doProcessBlockRecords(logger, cache, mongo, recordsBlock, statusHolder, doInsertRecord) {
+export async function doProcessBlockRecords(logger, cache, mongo, recordsBlock, statusHolder, doInsertRecord) {
     
     var current = Promise.resolve();
 
     return Promise.all(recordsBlock.map((record) => {
 
         current = current.then(async function() {
-            if (statusHolder.status === STATUS.ACTIVE)
+            if (statusHolder.isActive())
                 return await doInsertRecord(cache, mongo, record); // returns promise
             else
                 return {

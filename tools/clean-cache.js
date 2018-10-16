@@ -1,4 +1,5 @@
 'use strict';
+require = require('esm')(module/*, options*/);
 
 const Cache = require('../lib/cache').Cache;
 

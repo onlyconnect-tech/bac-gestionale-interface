@@ -87,17 +87,55 @@ export default class SynchronizerFatturePart {
      * @param {string} dbName 
      */
     constructor(fileName, cache, urlManogoDb, dbName) {
+        
+        /**
+         * @private
+         * @type {string}
+         */
         this.fileName = fileName;
+        
+        /**
+         * @private
+         * @type {Cache}
+         */
         this.cache = cache;
+
+        /**
+         * @private
+         * @type {string}
+         */
         this.urlManogoDb = urlManogoDb;
+
+        /**
+         * @private
+         * @type {string}
+         */
         this.dbName = dbName;
 
+        /**
+         * @private
+         * @type {Promise[]]}
+         */
         this.arrPromisesBlocksProcessing = [];
+        
+        /**
+         * @private
+         * @type {number}
+         */
         this.numRow = 0;
 
+        /**
+         * @private
+         * @type {StatusHolder}
+         */
         this.statusHolder = new StatusHolder();
     }
-
+    
+    /**
+     * Execute synchronization
+     * 
+     * @return {Promise}
+     */
     doWork() {
 
         this.statusHolder.setStatusActive();
@@ -109,7 +147,6 @@ export default class SynchronizerFatturePart {
             var observerG;
 
             var accumulatorRecords = [];
-            var numErrors = 0;
 
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
@@ -162,8 +199,7 @@ export default class SynchronizerFatturePart {
 
                     return resolve({
                         status: 'ERROR',
-                        numRow: this.numRow,
-                        numErrors: numErrors
+                        numRow: this.numRow
                     }); 
 
                 }).finally(()=> {

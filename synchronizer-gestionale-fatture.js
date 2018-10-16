@@ -98,6 +98,11 @@ export default class SynchronizerFatture {
         this.statusHolder = new StatusHolder();
     }
 
+    /**
+     * Execute synchronization
+     * 
+     * @return {Promise}     * 
+     */
     doWork() {
 
         this.statusHolder.setStatusActive();
@@ -109,7 +114,6 @@ export default class SynchronizerFatture {
             var observerG;
 
             var accumulatorRecords = [];
-            var numErrors = 0;
 
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
@@ -162,8 +166,7 @@ export default class SynchronizerFatture {
 
                     return resolve({
                         status: 'ERROR',
-                        numRow: this.numRow,
-                        numErrors: numErrors
+                        numRow: this.numRow
                     }); 
 
                 }).finally(()=> {
