@@ -124,10 +124,10 @@ export default class SynchronizerAnagrafica {
 
     /**
      * 
-     * @param {string} fileName 
-     * @param {Cache} cache 
-     * @param {string} urlManogoDb 
-     * @param {string} dbName 
+     * @param {string} fileName - name of the file synchronizing 
+     * @param {Cache} cache - Cache object
+     * @param {string} urlManogoDb - url for mongo db connection
+     * @param {string} dbName - db name 
      */
     constructor(fileName, cache, urlManogoDb, dbName) {
         /**

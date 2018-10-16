@@ -81,20 +81,52 @@ export default class SynchronizerFatture {
 
     /**
      * 
-     * @param {string} fileName name of the file synchronizing 
-     * @param {Cache} cache 
-     * @param {string} urlManogoDb url for mongo db connection
-     * @param {string} dbName db name 
+     * @param {string} fileName - name of the file synchronizing 
+     * @param {Cache} cache - Cache object
+     * @param {string} urlManogoDb - url for mongo db connection
+     * @param {string} dbName - db name 
      */
     constructor(fileName, cache, urlManogoDb, dbName) {
+        /**
+         * @private
+         * @type {string}
+         */
         this.fileName = fileName;
+
+        /**
+         * @private
+         * @type {Cache}
+         */
         this.cache = cache;
+
+        /**
+         * @private
+         * @type {string}
+         */
         this.urlManogoDb = urlManogoDb;
+
+        /**
+         * @private
+         * @type {string}
+         */
         this.dbName = dbName;
 
+        /**
+         * @private
+         * @type {Promise[]}
+         */
         this.arrPromisesBlocksProcessing = [];
+
+        /**
+         * @private
+         * @type {number}
+         */
         this.numRow = 0;
 
+        /**
+         * @private
+         * @type {StatusHolder}
+         */
         this.statusHolder = new StatusHolder();
     }
 
