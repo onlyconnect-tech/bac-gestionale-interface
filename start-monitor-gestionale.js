@@ -55,8 +55,8 @@ const env = require('env2')(confFile);
 const MonitoringFilesController = require('./controller/monitoring_files_controller');
 
 const SynchronizerAnagrafica = require('./synchronizer-anagrafica');
-const SynchronizerFatture = require('./synchronizer-invoices');
-const SynchronizerFatturePart = require('./synchronizer-invoices-part');
+const SynchronizerInvoices = require('./synchronizer-invoices');
+const SynchronizerInvoicesPart = require('./synchronizer-invoices-part');
 
 const Cache = require('./lib/cache').Cache;
 
@@ -85,15 +85,15 @@ const cache = new Cache('./cache_db/gestionale-db');
 
 const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName);
 
-const synchronizerFatture = new SynchronizerFatture(fileNameFatture, cache, urlManogoDb, dbName);
+const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, urlManogoDb, dbName);
 
-const synchronizerFatturePart = new SynchronizerFatturePart(fileNameFatturePart, cache, urlManogoDb, dbName);
+const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName);
 
 const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
 
 monitoringFilesController.registerControll(synchronizerAnagrafica);
-monitoringFilesController.registerControll(synchronizerFatture);
-monitoringFilesController.registerControll(synchronizerFatturePart);
+monitoringFilesController.registerControll(synchronizerInvoices);
+monitoringFilesController.registerControll(synchronizerInvoicesPart);
 
 process.on('SIGINT', async function() {
     logger.info('***** Caught interrupt signal *****');
