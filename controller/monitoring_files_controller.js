@@ -1,8 +1,5 @@
-'use strict';
-
-const fs = require('fs');
-
-const Logger = require('../lib/logger.js');
+import fs from 'fs';
+import Logger from '../lib/logger.js';
 
 const logger = new Logger('MONITORING_FILES_CONTROLLER');
 

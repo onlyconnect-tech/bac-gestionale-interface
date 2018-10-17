@@ -1,9 +1,12 @@
-const SynchronizerWorker = require('./synchronizer-worker');
+import SynchronizerWorker from './synchronizer-worker';
 
-const moment = require('moment');
-const hash = require('object-hash');
-const ValueStatus = require('./lib/cache').ValueStatus;
+import moment from 'moment';
+import hash from 'object-hash';
+import { ValueStatus } from './lib/cache';
 
+/**
+ * @extends {SynchronizerWorker}
+ */
 export default class SynchronizerInvoices extends SynchronizerWorker {
 
     /**
@@ -19,6 +22,15 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
 
     }
 
+    /**
+     * @private
+     * @override
+     * 
+     * @param {Mongo} mongo
+     * @param {object[]} record
+     * 
+     * @return {InsertResult}
+     */
     async doInsertRecord(mongo, record) {
         var seqNumberGest = record['@sequenceNumber'];
         var idFattura = record.NUMDOC;

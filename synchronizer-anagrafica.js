@@ -1,11 +1,13 @@
-const SynchronizerWorker = require('./synchronizer-worker');
+import SynchronizerWorker from './synchronizer-worker';
+import moment from 'moment';
+import hash from 'object-hash';
 
-const moment = require('moment');
-const hash = require('object-hash');
-const ValueStatus = require('./lib/cache').ValueStatus;
+import { ValueStatus } from './lib/cache';
 
 
-
+/**
+ * @extends {SynchronizerWorker}
+ */
 export default class SynchronizerAnagrafica extends SynchronizerWorker {
 
     /**
@@ -21,6 +23,15 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
 
     }
 
+    /**
+     * @private
+     * @override
+     * 
+     * @param {Mongo} mongo
+     * @param {object[]} record
+     * 
+     * @return {InsertResult}
+     */
     async doInsertRecord(mongo, record) {
 
         var isDeleted = record['@deleted'];

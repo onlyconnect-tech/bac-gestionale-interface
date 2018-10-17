@@ -1,11 +1,19 @@
 // Set options as a parameter, environment variable, or rc file.
 require = require('esm')(module/*, options*/);
 
-
-const DEFAULT_CONF_FILE = './env.json';
 const fs = require('fs');
 const path = require('path');
 const Logger = require('./lib/logger');
+
+const MonitoringFilesController = require('./controller/monitoring_files_controller');
+
+const SynchronizerAnagrafica = require('./synchronizer-anagrafica');
+const SynchronizerInvoices = require('./synchronizer-invoices');
+const SynchronizerInvoicesPart = require('./synchronizer-invoices-part');
+
+const Cache = require('./lib/cache').Cache;
+
+const DEFAULT_CONF_FILE = './env.json';
 
 const argv = require('yargs')
     .usage('Usage: $0 option config_file \n e.g $0 -c config_file')
@@ -51,15 +59,6 @@ try {
 logger.info('STARTING APPLICATION - CONF_FILE: %s', confFile);
 
 const env = require('env2')(confFile);
-
-const MonitoringFilesController = require('./controller/monitoring_files_controller');
-
-const SynchronizerAnagrafica = require('./synchronizer-anagrafica');
-const SynchronizerInvoices = require('./synchronizer-invoices');
-const SynchronizerInvoicesPart = require('./synchronizer-invoices-part');
-
-const Cache = require('./lib/cache').Cache;
-
 
 // Connection URL
 const urlManogoDb = process.env.MONGO_URL;

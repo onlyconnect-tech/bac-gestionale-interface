@@ -65,7 +65,10 @@ export class StatusHolder {
 }
 
 
-
+/**
+ * @interface
+ * 
+ */
 export default class SynchronizerWorker {
 
     /**
@@ -282,19 +285,26 @@ export default class SynchronizerWorker {
     }
 
     /**
+     * @private
+     * @abstract
      * 
-     * @param {Mongo} mongo 
-     * @param {Object[]} record 
+     * @param {Mongo} mongo
+     * @param {object[]} record
+     * 
+     * @return {InsertResult}
      */
     async doInsertRecord(mongo, record) {
         throw new Error('Method to override');
     }
 
+    /**
+     * set {@link statusHolder} for stop execution
+     */
     doStop() {
 
         this.statusHolder.setStatusStop();
         
-        this.logger.info('STOP SYNC'); 
+        this.logger.info('CALL STOP SYNC'); 
     }
 
 }
