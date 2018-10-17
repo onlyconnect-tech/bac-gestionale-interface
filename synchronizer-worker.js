@@ -108,12 +108,16 @@ export default class SynchronizerWorker {
         this.dbName = dbName;
 
         /**
+         * Promises accumulator
+         * 
          * @private
          * @type {Promise[]}
          */
         this.arrPromisesBlocksProcessing = [];
 
         /**
+         * Number of records loaded from file
+         * 
          * @private
          * @type {number}
          */
