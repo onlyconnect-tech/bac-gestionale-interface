@@ -1,4 +1,6 @@
 'use strict';
+// Set options as a parameter, environment variable, or rc file.
+require = require('esm')(module/*, options*/);
 
 const Cache = require('../lib/cache').Cache;
 const ValueStatus = require('../lib/cache').ValueStatus;
@@ -34,7 +36,34 @@ const test1 = async ()=> {
         console.log(err);
         console.log('************************');
     }
-}
+};
 
-test1();
+const test2 = async () => {
+    console.log('CHIAMATA TEST2');
+
+    try {
+        const cache = new Cache('./cache_db/test-db');
+
+        let nowDate = new Date();
+        await cache.setLastModifiedFile('PIPPO.txt', nowDate);
+
+        let date = await cache.getLastModifiedFile('PIPPO.txt');
+
+        assert(nowDate.getTime() === date.getTime());
+
+        // not in
+        await cache.getLastModifiedFile('PLUTO.txt');
+
+        await cache.close();
+
+    } catch (err) {
+        console.log('************************');
+        console.log(err);
+        console.log('************************');
+    }
+};
+
+// test1();
+
+test2();
 

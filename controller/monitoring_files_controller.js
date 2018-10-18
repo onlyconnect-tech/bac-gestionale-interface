@@ -1,4 +1,5 @@
 import fs from 'fs';
+import Promise from 'bluebird';
 import Logger from '../lib/logger.js';
 
 const logger = new Logger('MONITORING_FILES_CONTROLLER');
@@ -37,14 +38,22 @@ const syncrProcedure = async (synchronizerWorker) => {
 
 };
 
-class StatusCheck {
+export class StatusCheck {
 
+    /**
+     * 
+     * @param {boolean} working 
+     * @param {Date} timeCheck 
+     */
     constructor(working, timeCheck) {
         this.working = working;
         this.timeCheck = timeCheck;
     }
 }
 
+/**
+ * @external {Timer} https://nodejs.org/api/timers.html
+ */
 /**
  * Classe di controllo dei synchronizer.
  * @example
@@ -60,18 +69,53 @@ export default class MonitoringFilesController {
      */
     constructor(frequency) {
 
+        /**
+         * @private
+         * @type {number}
+         */
         this.frequency = frequency;
 
-        // timers holders
+        /**
+         * Timers holders
+         * 
+         * @private
+         * @type {Map<string, Timer>}
+         * 
+         */
         this.operationMappings = new Map();
+
+        /**
+         * SynchronizerWorker holder
+         * 
+         * @private
+         * @type {Map<string, SynchronizerWorker>}
+         * 
+         */
         this.synchronizerMappings = new Map();
 
-        // to do -add promise working
+        /**
+         * Map promise working
+         * 
+         * @private
+         * @type {Map<string, Promise>}
+         */
         this.promiseMapping = new Map();
 
-        // contains file system files status
+        /**
+         * contains file system files status - mdate modifications
+         * 
+         * @private
+         * @type {Map<string, Date>}
+         * 
+         */
         this.filesToMonitor = new Map();
         
+        /**
+         * Hold status working
+         * 
+         * @private
+         * @type {Map<string, StatusCheck>}
+         */
         this.filesModificationStatus = new Map();
     }
 
@@ -193,7 +237,8 @@ export default class MonitoringFilesController {
             logger.info(`the current mtime is: ${curr.mtime}`);
             logger.info(`the previous mtime was: ${prev.mtime}`);
             logger.info('*****************************************');
-        
+            
+            // insert date
             this.filesToMonitor.set(fileName, curr.mtime);
         
         });
