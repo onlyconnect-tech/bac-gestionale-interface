@@ -88,11 +88,11 @@ const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, ur
 
 const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName);
 
-const monitoringFilesController = new MonitoringFilesController(syncCheckFrequency);
+const monitoringFilesController = new MonitoringFilesController(cache, syncCheckFrequency);
 
-monitoringFilesController.registerControll(synchronizerAnagrafica);
-monitoringFilesController.registerControll(synchronizerInvoices);
-monitoringFilesController.registerControll(synchronizerInvoicesPart);
+monitoringFilesController.registerSynchronizerWorker(synchronizerAnagrafica);
+monitoringFilesController.registerSynchronizerWorker(synchronizerInvoices);
+monitoringFilesController.registerSynchronizerWorker(synchronizerInvoicesPart);
 
 process.on('SIGINT', async function() {
     logger.info('***** Caught interrupt signal *****');

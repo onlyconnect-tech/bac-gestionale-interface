@@ -45,15 +45,17 @@ const test2 = async () => {
         const cache = new Cache('./cache_db/test-db');
 
         let nowDate = new Date();
-        await cache.setLastModifiedFile('PIPPO.txt', nowDate);
+        await cache.setLastCheckedFile('PIPPO.txt', nowDate);
 
-        let date = await cache.getLastModifiedFile('PIPPO.txt');
+        let date = await cache.getLastCheckedFile('PIPPO.txt');
 
         assert(nowDate.getTime() === date.getTime());
 
         // not in
-        await cache.getLastModifiedFile('PLUTO.txt');
+        let dateFakeFile = await cache.getLastCheckedFile('PLUTO.txt');
 
+        assert(dateFakeFile == null);
+        
         await cache.close();
 
     } catch (err) {

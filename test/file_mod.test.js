@@ -1,14 +1,15 @@
 'use strict';
+// Set options as a parameter, environment variable, or rc file.
+require = require('esm')(module/*, options*/);
 
-const fs = require('fs');
+const FileUtil = require('../lib/FileUtil');
+
 const fileName = './data/TABFST01.DBF';
 
-fs.stat(fileName, (err, stats)=> {
-    if(err) {
-        console.log(err.message);
-        return;
-    }
+FileUtil.getDateFileModification(fileName).then((date) => {
+    console.log(date);
+});
 
-    // Date
-    console.log(stats.mtime);
+FileUtil.getDateFileModification('./data/PIPPO.DBF').catch((err) => {
+    console.log(err.message);
 });

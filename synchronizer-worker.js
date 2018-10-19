@@ -3,8 +3,8 @@ import {
     Observable
 } from 'rxjs/Observable';
 
-const Promise = require('bluebird');
-const Logger = require('./lib/logger.js');
+import Promise from 'bluebird';
+import Logger from './lib/logger.js';
 
 import Mongo from './lib/mongo';
 
