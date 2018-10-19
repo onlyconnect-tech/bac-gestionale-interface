@@ -39,19 +39,6 @@ const syncrProcedure = (synchronizerWorker) => {
 
 };
 
-export class StatusCheck {
-
-    /**
-     * 
-     * @param {boolean} working 
-     * @param {Date} timeCheck 
-     */
-    constructor(working, timeCheck) {
-        this.working = working;
-        this.timeCheck = timeCheck;
-    }
-}
-
 /**
  * @external {Timer} https://nodejs.org/api/timers.html
  */
@@ -92,13 +79,13 @@ export default class MonitoringFilesController {
         this.operationMappings = new Map();
 
         /**
-         * SynchronizerWorker holder
+         * SynchronizerWorker holder. Vedi {@link MonitoringFilesController.registerSynchronizerWorker}
          * 
          * @private
          * @type {Map<string, SynchronizerWorker>}
          * 
          */
-        this.synchronizerMappings = new Map();
+        this.synchronizerWorkersMappings = new Map();
 
         /**
          * Map promise working
@@ -116,14 +103,7 @@ export default class MonitoringFilesController {
          * 
          */
         this.filesModificationPendings = new Map();
-        
-        /**
-         * Hold status working
-         * 
-         * @private
-         * @type {Map<string, StatusCheck>}
-         */
-        this.filesModificationStatus = new Map();
+                
     }
 
     /**
@@ -142,15 +122,12 @@ export default class MonitoringFilesController {
 
             logger.debug('START CHECKING %s', fileName);
 
+            var dataModificationPending = this.filesModificationPendings.get(fileName);
+
             logger.debug('CONTAINS FILE CHANGED: %s -> %O', fileName, this.filesModificationPendings.get(fileName));
-            logger.debug('STATUS CHECKING: %s -> %O', fileName, this.filesModificationStatus.get(fileName));
 
-            var statusFile = this.filesModificationStatus.get(fileName);
-
-            // prende dalla cache --> se null ---> doWork
-            //                    --> !null ---> check modification status
-
-            if (statusFile == null) {
+            if(dataModificationPending == null) {
+                // no mod pendings
 
                 let dateCheck = await this.cache.getLastCheckedFile(fileName);
 
@@ -162,7 +139,8 @@ export default class MonitoringFilesController {
                         // check date
                         if(dateMod.getTime()<= dateCheck.getTime()) {
                             // yet syncronized - do nothing
-                            logger.info('DO NOTHING YET SYNCRONIZED');
+                            logger.info('DO NOTHING YET SYNCRONIZED FILE: %s', fileName);
+
                             return;
                         }
                     } catch (err) {
@@ -170,125 +148,57 @@ export default class MonitoringFilesController {
 
                     }
 
-
-                } else {
-                    // as NOW
                 }
+                
+                
 
-                logger.debug('FIRST TIME');
-                logger.info('DOING SYNCR %s', fileName);
-                // do work
-                let now = new Date();
-                this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
+                // if ok set date last check
 
-                // do syncr
 
-                // on finish
-                let promOp = cb().then(async (result) => {
-                    
-                    logger.debug('RESULT: %O', result);
-                    
-                    if(result.status === 'OK') {
-                        logger.info('OK SYNCRONIZATION');
-                        // if OK
-                        var newStatus = this.filesModificationStatus.get(fileName);
-                        newStatus.working = false;
-                        
-                        try {
-                            // set new date check
-                            await this.cache.setLastCheckedFile(fileName, now);
-                        } catch(err) {
-                            logger.error('Error setting cache: %s', err.message);
-                        }
-                        
-                    } else {
-
-                        logger.warn('FAILED SYNCRONIZATION');
-                        logger.debug('RESETTING PREVIOUS STATE!!');
-                        this.filesModificationStatus.set(fileName, statusFile);
-                    }
-                    
-                    return Promise.resolve();
-                });
-
-                this.promiseMapping.set(fileName, promOp);
-
-            } else {
-
-                logger.debug('STATUS FILE: %O', statusFile);
-
-                // get promise to check if working
-                let promOp = this.promiseMapping.get(fileName);
-
-                if(promOp) {
-
-                    logger.info('**** %o', promOp);
-
-                    logger.info('PROMISE FILE %s IS FINISHED %s', fileName, (promOp.isFulfilled() || promOp.isRejected()));
-                } else {
-                    logger.info('PROMISE FILE %s NOT FOUND', fileName);
-                }
-
-                // check time 
-                if (!statusFile.working &&
-                    (this.filesModificationPendings.get(fileName) ? this.filesModificationPendings.get(fileName).getTime() > statusFile.timeCheck : false)) {
-
-                    logger.info('DOING SYNCR %s', fileName);
-
-                    // do work
-                    let now = new Date();
-                    this.filesModificationStatus.set(fileName, new StatusCheck(true, now));
-
-                    // do syncr
-
-                    // on finish
-
-                    let promOp = cb().then(async (result) => {
-
-                        logger.debug('RESULT: %O', result);
-
-                        if(result.status === 'OK') {
-                            logger.info('OK SYNCRONIZATION %s', fileName);
-                            // if OK
-                            var newStatus = this.filesModificationStatus.get(fileName);
-                            newStatus.working = false;
-
-                            try {
-                                // set new date check
-                                await this.cache.setLastCheckedFile(fileName, now);
-                            } catch(err) {
-                                logger.error('Error setting cache: %s', err.message);
-                            }
-
-                        } else {
-                            logger.warn('FAILED SYNCRONIZATION');
-                            logger.debug('RESETTING PREVIOUS STATE!!');
-                            this.filesModificationStatus.set(fileName, statusFile);
-                        }
-
-                        return Promise.resolve();
-                    });
-
-                    this.promiseMapping.set(fileName, promOp);
-
-                } else {
-
-                    if(statusFile.working) {
-                        logger.debug('STILL WORKING SYNCRONIZATION');
-                    } else {
-                        logger.info('DO NOTHING - YET SYNCHRONIZED %s', fileName);
-                    }
-                }
             }
 
-            logger.debug('****************** NOW **********************');
-            logger.debug('STATUS CHECKING: %s -> %O', fileName, this.filesModificationStatus.get(fileName));
-            logger.debug('*********************************************');
-            logger.debug();
+            let workingPromise = this.promiseMapping.get(fileName);
+
+            if(workingPromise && workingPromise.isPending()) {
+                logger.info('SYNCRONIZER STILL WONKING ON FILE: %s', fileName);
+
+                return;
+            }
+
+            // on finish
+            let now = new Date();
+
+            let promOp = cb().then(async (result) => {
+                    
+                logger.debug('RESULT: %O', result);
+                                    
+                if(result.status === 'OK') {
+                    logger.info('OK SYNCRONIZATION');
+                    // if OK
+                                       
+                    this.filesModificationPendings.set(fileName, null);
+                                        
+                    try {
+                        // set new date check
+                        await this.cache.setLastCheckedFile(fileName, now);
+                    } catch(err) {
+                        logger.error('Error setting cache: %s', err.message);
+                    }
+                                        
+                } else {
+                
+                    logger.warn('FAILED SYNCRONIZATION');
+                }
+                                    
+                return Promise.resolve();
+            });
+                
+            this.promiseMapping.set(fileName, promOp);
+
 
         };
 
-        this.synchronizerMappings.set(fileName, synchronizerWorker);
+        this.synchronizerWorkersMappings.set(fileName, synchronizerWorker);
 
         FileUtil.registerFileModificationChecker(fileName, this.filesModificationPendings);
         
@@ -304,6 +214,10 @@ export default class MonitoringFilesController {
 
     }
 
+    /**
+     * 
+     * @return {Promise} - termination
+     */
     async doStopControll() {
         // stoppare i timer
 
@@ -320,7 +234,7 @@ export default class MonitoringFilesController {
             clearInterval(timer.timer);
         }
         
-        for (let [filename, synchronizer] of this.synchronizerMappings) {
+        for (let [filename, synchronizer] of this.synchronizerWorkersMappings) {
             logger.info('--> %s STOPPING SYNCRHONIZER', filename);
             
             synchronizer.doStop();
