@@ -70,15 +70,6 @@ export default class MonitoringFilesController {
         this.frequency = frequency;
 
         /**
-         * Timers holders
-         * 
-         * @private
-         * @type {Map<string, Timer>}
-         * 
-         */
-        this.operationMappings = new Map();
-
-        /**
          * SynchronizerWorker holder. Vedi {@link MonitoringFilesController.registerSynchronizerWorker}
          * 
          * @private
@@ -103,22 +94,28 @@ export default class MonitoringFilesController {
          * 
          */
         this.filesModificationPendings = new Map();
+
+        /**
+         * @private
+         * @type {Timer}
+         */
+        this.timer = null;
                 
     }
 
     /**
-     * Per registrare i syncronizer
-     * 
-     * @param {SynchronizerAnagrafica|SynchronizerFatture|SynchronizerFatturePart} synchronizerWorker 
+     * @private
+     * @return
      */
-    registerSynchronizerWorker(synchronizerWorker) {
+    async controller()  {
+         
+        for (let [fileName, synchronizerWorker] of this.synchronizerWorkersMappings) {
+            
+            logger.info('IN CONTROLLER: %s', fileName);
 
-        const fileName = synchronizerWorker.fileName;
-        const cb = () => {
-            return syncrProcedure(synchronizerWorker);
-        };
-
-        const controller = async () => {
+            const cb = () => {
+                return syncrProcedure(synchronizerWorker);
+            };
 
             logger.debug('START CHECKING %s', fileName);
 
@@ -127,31 +124,29 @@ export default class MonitoringFilesController {
             logger.debug('CONTAINS FILE CHANGED: %s -> %O', fileName, this.filesModificationPendings.get(fileName));
 
             if(dataModificationPending == null) {
-                // no mod pendings
+            // no mod pendings
 
                 let dateCheck = await this.cache.getLastCheckedFile(fileName);
 
                 if(dateCheck != null) {
-                    // check if sequent modifications
+                // check if sequent modifications
                     try {
                         let dateMod = await FileUtil.getDateFileModification(fileName);
 
                         // check date
                         if(dateMod.getTime()<= dateCheck.getTime()) {
-                            // yet syncronized - do nothing
+                        // yet syncronized - do nothing
                             logger.info('DO NOTHING YET SYNCRONIZED FILE: %s', fileName);
 
-                            return;
+                            continue;
                         }
                     } catch (err) {
-                        // if not found
+                    // if not found
 
                     }
 
                 }
-                
-                
-
+            
                 // if ok set date last check
 
 
@@ -162,55 +157,70 @@ export default class MonitoringFilesController {
             if(workingPromise && workingPromise.isPending()) {
                 logger.info('SYNCRONIZER STILL WONKING ON FILE: %s', fileName);
 
-                return;
+                continue;
             }
 
             // on finish
             let now = new Date();
 
             let promOp = cb().then(async (result) => {
-                    
+                
                 logger.debug('RESULT: %O', result);
-                                    
+                                
                 if(result.status === 'OK') {
                     logger.info('OK SYNCRONIZATION');
                     // if OK
-                                       
+                                   
                     this.filesModificationPendings.set(fileName, null);
-                                        
+                                    
                     try {
-                        // set new date check
+                    // set new date check
                         await this.cache.setLastCheckedFile(fileName, now);
                     } catch(err) {
                         logger.error('Error setting cache: %s', err.message);
                     }
-                                        
+                                    
                 } else {
-                
+            
                     logger.warn('FAILED SYNCRONIZATION');
                 }
-                                    
+                                
                 return Promise.resolve();
             });
-                
+            
             this.promiseMapping.set(fileName, promOp);
 
+        }
+    }
 
-        };
+    /**
+     * Per registrare i syncronizer. {@link SynchronizerWorker} possono essere aggiunti anche il seguito a {@link MonitoringFilesController.doStart}
+     * 
+     * @param {SynchronizerAnagrafica|SynchronizerInvoices|SynchronizerInvoicesPart} synchronizerWorker 
+     */
+    registerSynchronizerWorker(synchronizerWorker) {
 
+        const fileName = synchronizerWorker.fileName;
+        
         this.synchronizerWorkersMappings.set(fileName, synchronizerWorker);
 
         FileUtil.registerFileModificationChecker(fileName, this.filesModificationPendings);
         
-        controller(); // start now
-        
-        const timer = setInterval(() => { controller(); }, this.frequency * 1000);
+    }
 
-        this.operationMappings.set(fileName, {
-            timer: timer
-        });
+    /**
+     * Start application execution.
+     * 
+     */
+    doStart() {
 
+        if(this.timer == null) {
 
+            this.controller(); // start now
+                    
+            this.timer = setInterval(() => { this.controller(); }, this.frequency * 1000);
+             
+        }
 
     }
 
@@ -219,19 +229,14 @@ export default class MonitoringFilesController {
      * @return {Promise} - termination
      */
     async doStopControll() {
-        // stoppare i timer
-
-        // stoppare i workers
-
-        // this.operationMappings filename timer
-
 
         logger.info('STOP CONTROLL MONITORING');
 
-        for (let [filename, timer] of this.operationMappings) {
-            logger.info('--> %s STOPPING TIMER', filename);
+        if (this.timer != null)
+        {
+            logger.info('--> STOPPING TIMER');
             
-            clearInterval(timer.timer);
+            clearInterval(this.timer);
         }
         
         for (let [filename, synchronizer] of this.synchronizerWorkersMappings) {

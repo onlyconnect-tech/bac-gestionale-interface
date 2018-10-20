@@ -94,6 +94,8 @@ monitoringFilesController.registerSynchronizerWorker(synchronizerAnagrafica);
 monitoringFilesController.registerSynchronizerWorker(synchronizerInvoices);
 monitoringFilesController.registerSynchronizerWorker(synchronizerInvoicesPart);
 
+monitoringFilesController.doStart();
+
 process.on('SIGINT', async function() {
     logger.info('***** Caught interrupt signal *****');
 
