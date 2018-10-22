@@ -62,6 +62,14 @@ export class StatusHolder {
     isActive() {
         return this._status === STATUS.ACTIVE;
     }
+
+    /**
+     * 
+     * @return {boolean}
+     */
+    isStop() {
+        return this._status === STATUS.STOP;
+    }
 }
 
 
@@ -155,7 +163,7 @@ export default class SynchronizerWorker {
             });
 
             observable.subscribe(async (record) => {
-                const splitLength = 500;
+                const splitLength = 10000;
 
                 accumulatorRecords.push(record);
 
@@ -191,7 +199,7 @@ export default class SynchronizerWorker {
 
                 Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
 
-                    this.logger.info('LAST: %O', results);
+                    this.logger.info('COMPLETED SYNC: %O', results);
 
                     resolve({
                         status: 'OK',
@@ -200,7 +208,7 @@ export default class SynchronizerWorker {
 
                 }, (err) => {
                         
-                    this.logger.error('LAST: %s', err);
+                    this.logger.error('COMPLETED SYNC: %s', err.message);
 
                     return resolve({
                         status: 'ERROR',
@@ -266,17 +274,20 @@ export default class SynchronizerWorker {
 
         return Promise.all(recordsBlock.map((record) => {
 
-            current = current.then(async () => {
-                if (this.statusHolder.isActive())
-                    return await this.doInsertRecord(mongo, record); // returns promise
+            current = current.then(() => {
+                if (this.statusHolder.isActive()) {
+                    return this.doInsertRecord(mongo, record).then(result => {
+                        return result;
+                    }).catch((err) => {
+                        this.logger.error('ERROR RESULT ITEM: %s', err.message);
+                        return Promise.reject(err);
+                    });
+                }
                 else
                     return {
                         op: 'SKIP',
                         seqNumber: record['@sequenceNumber']
                     };
-            }).catch((err) => {
-                this.logger.error('ERROR RESULT BLOCK: %s', err);
-                return Promise.reject(err);
             });
 
             return current;
@@ -305,6 +316,14 @@ export default class SynchronizerWorker {
         this.statusHolder.setStatusStop();
         
         this.logger.info('CALL STOP SYNC'); 
+    }
+
+    /**
+     * 
+     * @return {boolean}
+     */
+    isStopping() {
+        return this.statusHolder.isStop();
     }
 
 }

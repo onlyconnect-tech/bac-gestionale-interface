@@ -73,7 +73,15 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
     
             this.logger.debug('----> CHECKING FATTURA PART seqNumber: %d', seqNumberGest);
      
-            const resultOp = await mongo.insertOrUpdateFatturaPart(fatturaPart);
+            let resultOp = null;
+
+            if(cacheStatus === ValueStatus.MODIFIED) {
+                // update
+                resultOp = await mongo.updateFatturaPart(fatturaPart);
+            } else {
+                // no value -> INSERT
+                resultOp = await mongo.insertFatturaPart(fatturaPart);
+            }
     
             // if (resultOp.op !== 'NONE')
             this.logger.debug('SYNC FATTURA PART: %j', resultOp);
@@ -83,8 +91,8 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
             return resultOp;
     
         } catch (err) {
-            this.logger.error(err);
-            this.logger.error('ERROR INSERT FATTURA PART: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
+            this.logger.silly(err);
+            this.logger.silly('ERROR INSERT FATTURA PART: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
             throw err;
     
         }

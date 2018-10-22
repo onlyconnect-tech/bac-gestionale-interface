@@ -21,14 +21,15 @@ const syncrProcedure = (synchronizerWorker) => {
     const startSyncAnag = process.hrtime();
 
     return synchronizerWorker.doWork().then(function (result) {
-        return result;
-    }, function(err) {
-        logger.error('*** %s', err.message);
-        return {
-            status: 'ERROR',
-            numRow: -1,
-            numErrors: -1
-        };
+        if(result.status === 'OK')
+            return result;
+        else {
+            return {
+                status: 'ERROR',
+                numRow: -1,
+                numErrors: -1
+            };
+        }
     }).finally(function(){
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);
@@ -107,7 +108,8 @@ async function controller()  {
                                     
                 try {
                     // set new date check
-                    await this.cache.setLastCheckedFile(fileName, now);
+                    if(!synchronizerWorker.isStopping())
+                        await this.cache.setLastCheckedFile(fileName, now);
                 } catch(err) {
                     logger.error('Error setting cache: %s', err.message);
                 }

@@ -72,7 +72,15 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
     
             this.logger.debug('----> CHECKING FATTURA seqNumber: %d', seqNumberGest);
      
-            const resultOp = await mongo.insertOrUpdateFattura(fattura);
+            let resultOp = null;
+
+            if(cacheStatus === ValueStatus.MODIFIED) {
+                // update
+                resultOp = await mongo.updateFattura(fattura);
+            } else {
+                // no value -> INSERT
+                resultOp = await mongo.insertFattura(fattura);
+            }
     
             // if (resultOp.op !== 'NONE')
             this.logger.debug('SYNC FATTURA: %j', resultOp);
@@ -82,8 +90,8 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
             return resultOp;
     
         } catch (err) {
-            this.logger.error(err);
-            this.logger.error('ERROR INSERT FATTURA: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
+            this.logger.silly(err);
+            this.logger.silly('ERROR INSERT FATTURA: %s - SEQUENCE NUMBER: %d', err.message, record['@sequenceNumber']);
             throw err;
     
         }

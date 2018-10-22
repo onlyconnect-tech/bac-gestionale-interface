@@ -114,7 +114,19 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
     
             this.logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
     
-            const restInsertAnagrafica = await mongo.insertOrUpdateAnagrafica(anagrafica);
+            let restInsertAnagrafica = null;
+
+            if(cacheStatus === ValueStatus.MODIFIED) {
+                // update
+                restInsertAnagrafica = await mongo.updateAnagrafica(anagrafica);
+            } else {
+                // no value -> INSERT
+                restInsertAnagrafica = await mongo.insertAnagrafica(anagrafica);
+            }
+
+            // insertAnagrafica
+
+            // updateAnagrafica
     
             // if(restInsertAnagrafica.op !== 'NONE')
             this.logger.debug('SYNC ANAG: %j', restInsertAnagrafica);
@@ -128,8 +140,8 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             return restInsertAnagrafica;
     
         } catch (err) {
-            this.logger.error(err);
-            this.logger.error('ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d',  err.message, record['@sequenceNumber']);
+            this.logger.silly(err);
+            this.logger.silly('ERROR INSERT ANAGRAFICA: %s - SEQUENCE NUMBER: %d',  err.message, record['@sequenceNumber']);
             throw err;
         }
     
