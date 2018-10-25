@@ -206,9 +206,9 @@ export default class SynchronizerWorker {
                         numRow: this.numRow
                     });
 
-                }, (err) => {
+                }).catch((err) => {
                         
-                    this.logger.error('COMPLETED SYNC: %s', err.message);
+                    this.logger.error('FAILED COMPLETED SYNC: %s', err.message);
 
                     return resolve({
                         status: 'ERROR',
@@ -278,9 +278,6 @@ export default class SynchronizerWorker {
                 if (this.statusHolder.isActive()) {
                     return this.doInsertRecord(mongo, record).then(result => {
                         return result;
-                    }).catch((err) => {
-                        this.logger.error('ERROR RESULT ITEM: %s', err.message);
-                        return Promise.reject(err);
                     });
                 }
                 else
@@ -292,7 +289,9 @@ export default class SynchronizerWorker {
 
             return current;
         
-        }));
+        })).catch(err => {
+            return Promise.reject(err);
+        });
     }
 
     /**

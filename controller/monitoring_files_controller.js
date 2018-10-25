@@ -30,6 +30,14 @@ const syncrProcedure = (synchronizerWorker) => {
                 numErrors: -1
             };
         }
+    }).catch(err => {
+        // catch problem mongo db connection problems on startup
+        logger.error('%s', err.message);
+        return {
+            status: 'ERROR',
+            numRow: -1,
+            numErrors: -1
+        };
     }).finally(function(){
         const diff = process.hrtime(startSyncAnag);
         const fDiff = formatSeconds(diff[0]);

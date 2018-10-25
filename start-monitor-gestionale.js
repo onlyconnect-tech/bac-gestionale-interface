@@ -99,10 +99,8 @@ monitoringFilesController.doStart();
 process.on('SIGINT', async function() {
     logger.info('***** Caught interrupt signal *****');
 
-    // stop registered processing TODO
-    await monitoringFilesController.doStopControll();
-    
     try {
+        await monitoringFilesController.doStopControll();
         await cache.close();
     } catch(err) {
         logger.error(' %s', err.message);
