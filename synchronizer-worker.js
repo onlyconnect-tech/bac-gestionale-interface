@@ -119,14 +119,6 @@ export default class SynchronizerWorker {
         this.dbName = dbName;
 
         /**
-         * Promises accumulator
-         * 
-         * @private
-         * @type {Promise[]}
-         */
-        this.arrPromisesBlocksProcessing = [];
-
-        /**
          * Number of records loaded from file
          * 
          * @private
@@ -139,6 +131,7 @@ export default class SynchronizerWorker {
          * @type {StatusHolder}
          */
         this.statusHolder = new StatusHolder();
+        
     }
 
     /**
@@ -158,12 +151,15 @@ export default class SynchronizerWorker {
 
             var accumulatorRecords = [];
 
+            var queued = [];
+            var parallel = 3;
+
             var observable = Observable.create(function subscribe(observer) {
                 observerG = observer;
             });
 
             observable.subscribe(async (record) => {
-                const splitLength = 10000;
+                const splitLength = 100;
 
                 accumulatorRecords.push(record);
 
@@ -173,10 +169,12 @@ export default class SynchronizerWorker {
                     accumulatorRecords = [];
                     // call insert block
 
-                    var resultsP = this.doProcessBlockRecords(mongo, recordsBlock);
-
-                    this.arrPromisesBlocksProcessing.push(resultsP);
-
+                    let mustComplete = Math.max(0, queued.length - parallel + 1);
+                    // when enough items are complete, queue another request for an item    
+                    let download = Promise.some(queued, mustComplete)
+                        .then(() => { return this.doProcessBlockRecords(mongo, recordsBlock); });
+                    queued.push(download);
+                    
                 }
 
 
@@ -193,11 +191,13 @@ export default class SynchronizerWorker {
 
                 this.logger.info('PROCESSING LAST BLOCK!!!');
 
-                var resultsP = this.doProcessBlockRecords(mongo, accumulatorRecords);
+                let mustComplete = Math.max(0, queued.length - parallel + 1);
+                // when enough items are complete, queue another request for an item    
+                let download = Promise.some(queued, mustComplete)
+                    .then(() => { return this.doProcessBlockRecords(mongo, accumulatorRecords); });
+                queued.push(download);
 
-                this.arrPromisesBlocksProcessing.push(resultsP);
-
-                Promise.all(this.arrPromisesBlocksProcessing).then((results)=> {
+                Promise.all(queued).then((results)=> {
 
                     this.logger.info('COMPLETED SYNC: %O', results);
 
@@ -223,7 +223,6 @@ export default class SynchronizerWorker {
 
                     this.numRow = 0;
 
-                    this.arrPromisesBlocksProcessing = [];
                 });
                    
             });
