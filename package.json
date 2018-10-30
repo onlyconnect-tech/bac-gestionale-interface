@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "doc": "rm -r ./docs && esdoc",
-    "dev": "nodemon start-server.js",
     "eslint": "eslint"
   },
   "author": "Massimo.Cappe@gmail.com",
@@ -14,12 +13,9 @@
   "dependencies": {
     "app-root-path": "^2.1.0",
     "bluebird": "^3.5.2",
-    "bounce": "^1.2.0",
     "env2": "^2.2.2",
     "esm": "^3.0.84",
-    "hapi": "^17.6.0",
-    "hapi-pino": "^5.1.0",
-    "joi": "^13.7.0",
+    "joi": "^14.0.2",
     "level": "^4.0.0",
     "moment": "^2.22.2",
     "mongodb": "^3.1.6",
@@ -34,7 +30,6 @@
   "devDependencies": {
     "esdoc": "^1.1.0",
     "esdoc-standard-plugin": "^1.0.0",
-    "eslint": "^5.6.1",
-    "nodemon": "^1.18.4"
+    "eslint": "^5.6.1"
   }
 }
