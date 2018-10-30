@@ -5,6 +5,8 @@
 `node start-monitor-gestionale` using default `env.json` config file or `node start-monitor-gestionale -c <CONFIG_FILE>` with a 
 specific config file.
 
+![BAC_symchronizer](./BAC_synchronizer.jpg)
+
 ### CONFIG FILE
 
 Example [env_template.json](./env_template.json)
