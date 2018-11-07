@@ -3,6 +3,7 @@ import SynchronizerWorker from './synchronizer-worker';
 import hash from 'object-hash';
 import { ValueStatus } from './lib/cache';
 
+import Promise from 'bluebird';
 
 /**
  * @extends {SynchronizerWorker}
@@ -14,11 +15,12 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
      * @param {string} fileName - name of the file synchronizing 
      * @param {Cache} cache - Cache object
      * @param {string} urlManogoDb - url for mongo db connection
-     * @param {string} dbName - db name 
+     * @param {string} dbName - db name
+     * @param {number} msDelay - ms between request to mongodb 
      */
-    constructor(fileName, cache, urlManogoDb, dbName) {
+    constructor(fileName, cache, urlManogoDb, dbName, msDelay) {
 
-        super('SYNC_INVOICES_PART', fileName, cache, urlManogoDb, dbName);
+        super('SYNC_INVOICES_PART', fileName, cache, urlManogoDb, dbName, msDelay);
 
     }
 
@@ -28,10 +30,11 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
      * 
      * @param {Mongo} mongo
      * @param {object[]} record
+     * @param {number} msDelay - ms of relay return promise
      * 
      * @return {InsertResult}
      */
-    async doInsertRecord(mongo, record) {
+    async doInsertRecord(mongo, record, msDelay) {
         var seqNumberGest = record['@sequenceNumber'];
         var idFattura = record.NUMDOC;
         var annDoc = record.ANNDOC;
@@ -87,8 +90,8 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
             this.logger.debug('SYNC FATTURA PART: %j', resultOp);
             
             await this.cache.setInvoicePartHash(fatturaPart._id, fatturaPart.hash);
-    
-            return resultOp;
+            
+            return Promise.delay(msDelay).then(() => { return resultOp; });
     
         } catch (err) {
             this.logger.silly(err);

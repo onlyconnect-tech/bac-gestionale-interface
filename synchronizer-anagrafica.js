@@ -4,6 +4,7 @@ import hash from 'object-hash';
 
 import { ValueStatus } from './lib/cache';
 
+import Promise from 'bluebird';
 
 /**
  * @extends {SynchronizerWorker}
@@ -16,10 +17,11 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
      * @param {Cache} cache - Cache object
      * @param {string} urlManogoDb - url for mongo db connection
      * @param {string} dbName - db name 
+     * @param {number} msDelay - ms between request to mongodb
      */
-    constructor(fileName, cache, urlManogoDb, dbName) {
+    constructor(fileName, cache, urlManogoDb, dbName, msDelay) {
 
-        super('SYNC_ANAGRAFICA', fileName, cache, urlManogoDb, dbName);
+        super('SYNC_ANAGRAFICA', fileName, cache, urlManogoDb, dbName, msDelay);
 
     }
 
@@ -29,10 +31,11 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
      * 
      * @param {Mongo} mongo
      * @param {object[]} record
+     * @param {number} msDelay - ms of relay return promise 
      * 
      * @return {InsertResult}
      */
-    async doInsertRecord(mongo, record) {
+    async doInsertRecord(mongo, record, msDelay) {
 
         var isDeleted = record['@deleted'];
         var sequenceNumber = record['@sequenceNumber'];
@@ -114,14 +117,14 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
     
             this.logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
     
-            let restInsertAnagrafica = null;
+            let resultOp = null;
 
             if(cacheStatus === ValueStatus.MODIFIED) {
                 // update
-                restInsertAnagrafica = await mongo.updateAnagrafica(anagrafica);
+                resultOp = await mongo.updateAnagrafica(anagrafica);
             } else {
                 // no value -> INSERT
-                restInsertAnagrafica = await mongo.insertAnagrafica(anagrafica);
+                resultOp = await mongo.insertAnagrafica(anagrafica);
             }
 
             // insertAnagrafica
@@ -129,7 +132,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             // updateAnagrafica
     
             // if(restInsertAnagrafica.op !== 'NONE')
-            this.logger.debug('SYNC ANAG: %j', restInsertAnagrafica);
+            this.logger.debug('SYNC ANAG: %j', resultOp);
     
             // if op === 'INSERT' add to sync operations
             // if op === 'UPDATE' add to sync operations
@@ -137,7 +140,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
     
             await this.cache.setAnagraficaHash(anagrafica._id, anagrafica.hash);
     
-            return restInsertAnagrafica;
+            return Promise.delay(msDelay).then(() => { return resultOp; });
     
         } catch (err) {
             this.logger.silly(err);

@@ -84,9 +84,10 @@ export default class SynchronizerWorker {
      * @param {string} fileName - name of the file synchronizing 
      * @param {Cache} cache - Cache object
      * @param {string} urlManogoDb - url for mongo db connection
-     * @param {string} dbName - db name 
+     * @param {string} dbName - db name
+     * @param {number} msDelay - ms between request to mongodb
      */
-    constructor(lableLogger, fileName, cache, urlManogoDb, dbName) {
+    constructor(lableLogger, fileName, cache, urlManogoDb, dbName, msDelay) {
 
         /**
          * @private
@@ -117,6 +118,12 @@ export default class SynchronizerWorker {
          * @type {string} - db name mongo
          */
         this.dbName = dbName;
+
+        /**
+         * @private
+         * @type {number} - ms between request to mongodb
+         */
+        this.msDelay = msDelay;
 
         /**
          * Number of records loaded from file
@@ -275,7 +282,7 @@ export default class SynchronizerWorker {
 
             current = current.then(() => {
                 if (this.statusHolder.isActive()) {
-                    return this.doInsertRecord(mongo, record).then(result => {
+                    return this.doInsertRecord(mongo, record, this.msDelay).then(result => {
                         return result;
                     });
                 }
@@ -299,10 +306,11 @@ export default class SynchronizerWorker {
      * 
      * @param {Mongo} mongo
      * @param {object[]} record
+     * @param {number} msDelay - ms of relay return promise
      * 
      * @return {InsertResult}
      */
-    async doInsertRecord(mongo, record) {
+    async doInsertRecord(mongo, record, msDelay) {
         throw new Error('Method to override');
     }
 

@@ -82,11 +82,13 @@ const fileNameFatturePart = path.join(dbfDirOath, 'TABFST02.DBF');
 
 const cache = new Cache('./cache_db/gestionale-db');
 
-const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName);
+const MS_DELAY_MONGO_REQUEST = 200; // ms between request 
 
-const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, urlManogoDb, dbName);
+const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
 
-const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName);
+const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
+
+const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
 
 const monitoringFilesController = new MonitoringFilesController(cache, syncCheckFrequency);
 
