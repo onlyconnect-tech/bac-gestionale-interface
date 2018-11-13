@@ -89,7 +89,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
             // if (resultOp.op !== 'NONE')
             this.logger.debug('SYNC FATTURA: %j', resultOp);
             
-            await this.cache.setInvoiceHash(fattura._id, fattura.hash);
+            await this.cache.setInvoiceHash(fattura.sequenceNumber, fattura.hash);
     
             return Promise.delay(msDelay).then(() => { return resultOp; });
     
