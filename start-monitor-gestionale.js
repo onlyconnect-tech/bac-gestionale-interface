@@ -78,8 +78,6 @@ logger.info('SYNC CHECK FREQUENCY: %d', syncCheckFrequency);
 logger.info('DBF_DIR_PATH: %s', dbfDirOath);
 logger.info('DELAY_MONGO_REQUEST: %d', DELAY_MONGO_REQUEST);
 
-return;
-
 const fileNameAnagrafica = path.join(dbfDirOath, 'ANACF.DBF');
 const fileNameFatture = path.join(dbfDirOath, 'TABFST01.DBF');
 const fileNameFatturePart = path.join(dbfDirOath, 'TABFST02.DBF');
