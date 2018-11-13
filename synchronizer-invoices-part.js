@@ -50,7 +50,7 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
         try {
     
             var fatturaPart = {
-                _id: seqNumberGest,
+                sequenceNumber: seqNumberGest,
                 idFattura: idFattura,
                 annDoc: annDoc,
                 numRig: numRig,
@@ -65,12 +65,12 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
             var hashValue = hash(fatturaPart);
             fatturaPart.hash = hashValue;
     
-            var cacheStatus = await this.cache.checkInvoicePartHash(fatturaPart._id, fatturaPart.hash);
+            var cacheStatus = await this.cache.checkInvoicePartHash(fatturaPart.sequenceNumber, fatturaPart.hash);
     
             if(cacheStatus === ValueStatus.SAME) {
                 return {
                     op: 'NONE',
-                    seqNumber: fatturaPart._id
+                    seqNumber: fatturaPart.sequenceNumber
                 };
             }
     
@@ -89,7 +89,7 @@ export default class SynchronizerInvoicesPart extends SynchronizerWorker {
             // if (resultOp.op !== 'NONE')
             this.logger.debug('SYNC FATTURA PART: %j', resultOp);
             
-            await this.cache.setInvoicePartHash(fatturaPart._id, fatturaPart.hash);
+            await this.cache.setInvoicePartHash(fatturaPart.sequenceNumber, fatturaPart.hash);
             
             return Promise.delay(msDelay).then(() => { return resultOp; });
     

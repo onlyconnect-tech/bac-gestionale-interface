@@ -50,7 +50,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
         try {
     
             var fattura = {
-                _id: seqNumberGest,
+                sequenceNumber: seqNumberGest,
                 idFattura: idFattura,
                 annDoc: annDoc,
                 datDoc: datDoc,
@@ -65,12 +65,12 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
             var hashValue = hash(fattura);
             fattura.hash = hashValue;
     
-            var cacheStatus = await this.cache.checkInvoiceHash(fattura._id, fattura.hash);
+            var cacheStatus = await this.cache.checkInvoiceHash(fattura.sequenceNumber, fattura.hash);
     
             if(cacheStatus === ValueStatus.SAME) {
                 return {
                     op: 'NONE',
-                    seqNumber: fattura._id
+                    seqNumber: fattura.sequenceNumber
                 };
             }
     

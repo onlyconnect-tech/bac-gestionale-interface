@@ -44,7 +44,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
     
             return {
                 op: 'INVALID_TYPE',
-                anagraficaId: -1
+                seqNumber: sequenceNumber
             };
         }
     
@@ -72,7 +72,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             this.logger.warn(`INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: '${info.codiceCli}'`);
             return {
                 op: 'INVALID_PARSING',
-                anagraficaId: -1
+                seqNumber: sequenceNumber
             };
         }
     
@@ -91,7 +91,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             
     
             var anagrafica = {
-                _id: sequenceNumber,
+                sequenceNumber: sequenceNumber,
                 isDeleted: isDeleted,
                 codiceCli: info.codiceCli,
                 ragSoc: ragSoc,
@@ -106,12 +106,12 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             var hashValue = hash(anagrafica);
             anagrafica.hash = hashValue;
     
-            var cacheStatus = await this.cache.checkAnagraficaHash(anagrafica._id, anagrafica.hash);
+            var cacheStatus = await this.cache.checkAnagraficaHash(anagrafica.sequenceNumber, anagrafica.hash);
     
             if(cacheStatus === ValueStatus.SAME) {
                 return {
                     op: 'NONE',
-                    seqNumber: anagrafica._id
+                    seqNumber: anagrafica.sequenceNumber
                 };
             }
     
@@ -138,7 +138,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             // if op === 'UPDATE' add to sync operations
             // if op === 'NONE' no need sync operations
     
-            await this.cache.setAnagraficaHash(anagrafica._id, anagrafica.hash);
+            await this.cache.setAnagraficaHash(anagrafica.sequenceNumber, anagrafica.hash);
     
             return Promise.delay(msDelay).then(() => { return resultOp; });
     

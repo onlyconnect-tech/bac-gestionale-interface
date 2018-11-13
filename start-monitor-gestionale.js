@@ -82,7 +82,7 @@ const fileNameFatturePart = path.join(dbfDirOath, 'TABFST02.DBF');
 
 const cache = new Cache('./cache_db/gestionale-db');
 
-const MS_DELAY_MONGO_REQUEST = 200; // ms between request 
+const MS_DELAY_MONGO_REQUEST = 20; // ms between request 
 
 const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
 
