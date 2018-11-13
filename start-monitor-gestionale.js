@@ -69,12 +69,16 @@ const dbName = process.env.DB_NAME;
 const syncCheckFrequency = process.env.SYNC_FREQUENCY;
 
 const dbfDirOath = process.env.DBF_DIR_PATH || './data';
+const DELAY_MONGO_REQUEST = process.env.DELAY_MONGO_REQUEST || 20; // ms between request 
 
 logger.info('STARTING APP');
 logger.info('URL MONGODB: %s', urlManogoDb);
 logger.info('DB_NAME: %s', dbName);
 logger.info('SYNC CHECK FREQUENCY: %d', syncCheckFrequency);
 logger.info('DBF_DIR_PATH: %s', dbfDirOath);
+logger.info('DELAY_MONGO_REQUEST: %d', DELAY_MONGO_REQUEST);
+
+return;
 
 const fileNameAnagrafica = path.join(dbfDirOath, 'ANACF.DBF');
 const fileNameFatture = path.join(dbfDirOath, 'TABFST01.DBF');
@@ -82,13 +86,11 @@ const fileNameFatturePart = path.join(dbfDirOath, 'TABFST02.DBF');
 
 const cache = new Cache('./cache_db/gestionale-db');
 
-const MS_DELAY_MONGO_REQUEST = 20; // ms between request 
+const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName, DELAY_MONGO_REQUEST);
 
-const synchronizerAnagrafica = new SynchronizerAnagrafica(fileNameAnagrafica, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
+const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, urlManogoDb, dbName, DELAY_MONGO_REQUEST);
 
-const synchronizerInvoices = new SynchronizerInvoices(fileNameFatture, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
-
-const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName, MS_DELAY_MONGO_REQUEST);
+const synchronizerInvoicesPart = new SynchronizerInvoicesPart(fileNameFatturePart, cache, urlManogoDb, dbName, DELAY_MONGO_REQUEST);
 
 const monitoringFilesController = new MonitoringFilesController(cache, syncCheckFrequency);
 

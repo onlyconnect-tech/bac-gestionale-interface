@@ -15,7 +15,8 @@ Example [env_template.json](./env_template.json)
     "MONGO_URL": "<VALUE MONGO URL>",
     "DB_NAME": "<VALUE DB NAME>",
     "SYNC_FREQUENCY": 60,
-    "DBF_DIR_PATH": "<PATH DIR DBF FILES>"
+    "DBF_DIR_PATH": "<PATH DIR DBF FILES>",
+    "DELAY_MONGO_REQUEST": 50
 }
 ```
 If no file is specified with `-c` option, default `./env.json` is used.
@@ -26,6 +27,7 @@ If no file is specified with `-c` option, default `./env.json` is used.
 | _DB_NAME_ | mongo db instance name | **NONE** |
 | _SYNC_FREQUENCY_ | seconds frequency for check synchronization | **NONE** |
 | _DBF_DIR_PATH_ | path dir `.DBF` files | '_./data_' |
+| _DELAY_MONGO_REQUEST_ | ms between mongodb request| _20_ |
 
 ### CLEAN CACHE
 
