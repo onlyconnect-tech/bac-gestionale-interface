@@ -151,7 +151,12 @@ export default class SynchronizerWorker {
         this.statusHolder.setStatusActive();
 
         return new Promise((resolve, reject) => {
-            const parser = new Parser(this.fileName);
+
+            const options = {
+                // encoding: 'binary'
+            };
+
+            const parser = new Parser(this.fileName, options);
             const mongo = new Mongo(this.urlManogoDb, this.dbName);
 
             var observerG;
@@ -179,7 +184,12 @@ export default class SynchronizerWorker {
                     let mustComplete = Math.max(0, queued.length - parallel + 1);
                     // when enough items are complete, queue another request for an item    
                     let download = Promise.some(queued, mustComplete)
-                        .then(() => { return this.doProcessBlockRecords(mongo, recordsBlock); });
+                        .then(() => { return this.doProcessBlockRecords(mongo, recordsBlock); }).catch(Promise.AggregateError, (err) => {
+                            err.forEach((e) => {
+                                this.logger.error(e.stack);
+                            });
+                        });
+
                     queued.push(download);
                     
                 }
@@ -201,7 +211,13 @@ export default class SynchronizerWorker {
                 let mustComplete = Math.max(0, queued.length - parallel + 1);
                 // when enough items are complete, queue another request for an item    
                 let download = Promise.some(queued, mustComplete)
-                    .then(() => { return this.doProcessBlockRecords(mongo, accumulatorRecords); });
+                    .then(() => { return this.doProcessBlockRecords(mongo, accumulatorRecords); })
+                    .catch(Promise.AggregateError, (err) => {
+                        err.forEach((e) => {
+                            this.logger.error(e.stack);
+                        });
+                    });
+
                 queued.push(download);
 
                 Promise.all(queued).then((results)=> {
@@ -284,6 +300,11 @@ export default class SynchronizerWorker {
                 if (this.statusHolder.isActive()) {
                     return this.doInsertRecord(mongo, record, this.msDelay).then(result => {
                         return result;
+                    }).catch(err => {
+
+                        this.logger.error(err.stack);
+                        
+                        throw err;
                     });
                 }
                 else
@@ -292,7 +313,7 @@ export default class SynchronizerWorker {
                         seqNumber: record['@sequenceNumber']
                     };
             });
-
+ 
             return current;
         
         })).catch(err => {
