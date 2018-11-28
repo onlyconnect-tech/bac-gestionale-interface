@@ -49,7 +49,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
         }
     
         const info = {
-            codiceCli: record.CODCF,
+            codCliF: record.CODCF,
             ragSoc: record.RAGSOC,
             indSedeLeg: record.INDIR,
             ragSoc2: record.RAGSOC2,
@@ -68,8 +68,8 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             ragSoc = ragSoc + ' - ' + info.ragSoc2;
         }
     
-        if (isNaN(info.codiceCli)) {
-            this.logger.warn(`INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: '${info.codiceCli}'`);
+        if (isNaN(info.codCliF)) {
+            this.logger.warn(`INVALID RECORD: ${sequenceNumber}, error parsing - codiceCliente: '${info.codCliF}'`);
             return {
                 op: 'INVALID_PARSING',
                 seqNumber: sequenceNumber
@@ -93,7 +93,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
             var anagrafica = {
                 sequenceNumber: sequenceNumber,
                 isDeleted: isDeleted,
-                codiceCli: info.codiceCli,
+                codCliF: info.codCliF,
                 ragSoc: ragSoc,
                 indSedeLeg: info.indSedeLeg,
                 codiceFisc: info.codiceFisc,
@@ -115,7 +115,7 @@ export default class SynchronizerAnagrafica extends SynchronizerWorker {
                 };
             }
     
-            this.logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codiceCli);
+            this.logger.debug('----> CHECK ANAGRAFICA - sequenceNumber: %d, codCli: %d', sequenceNumber, info.codCliF);
     
             let resultOp = null;
 

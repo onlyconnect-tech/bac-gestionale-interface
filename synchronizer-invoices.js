@@ -40,7 +40,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
         var idFattura = record.NUMDOC;
         var annDoc = record.ANNDOC;
         var datDoc = moment(record.DATDOC, 'YYYYMMDD').toDate();
-        var codCliente = record.CODCF;
+        var codCliF = record.CODCF;
         var totImp = record.TOTIMP;
         var totIVA = record.TOTIVA;
         var totRit = record.RTIMPRIT;
@@ -54,7 +54,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
                 idFattura: idFattura,
                 annDoc: annDoc,
                 datDoc: datDoc,
-                codCliente: codCliente,
+                codCliF: codCliF,
                 totImp: totImp,
                 totIVA: totIVA,
                 totRit: totRit,
