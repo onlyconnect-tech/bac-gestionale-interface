@@ -37,6 +37,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
      */
     async doInsertRecord(mongo, record, msDelay) {
         var seqNumberGest = record['@sequenceNumber'];
+        var tipoFatt = record.TIPDOC;
         var idFattura = record.NUMDOC;
         var annDoc = record.ANNDOC;
         var datDoc = moment(record.DATDOC, 'YYYYMMDD').toDate();
@@ -51,6 +52,7 @@ export default class SynchronizerInvoices extends SynchronizerWorker {
     
             var fattura = {
                 sequenceNumber: seqNumberGest,
+                tipoFatt: tipoFatt,
                 idFattura: idFattura,
                 annDoc: annDoc,
                 datDoc: datDoc,
